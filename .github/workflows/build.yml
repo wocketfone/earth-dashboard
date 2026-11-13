@@ -25,6 +25,7 @@ jobs:
       - run: node fetcher/mapping.test.js
       - run: node fetcher/series.test.js
       - run: node fetcher/sources.test.js
+      - run: node fetcher/build.test.js
       - run: node fetcher/build.js
         env:
           FRESH: ${{ inputs.fresh && '1' || '' }}

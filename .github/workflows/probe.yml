@@ -17,6 +17,7 @@ jobs:
       - run: node fetcher/mapping.test.js
       - run: node fetcher/series.test.js
       - run: node fetcher/sources.test.js
+      - run: node fetcher/build.test.js
       - run: node fetcher/probe.js
       - name: Save the result
         run: |

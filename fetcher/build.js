@@ -1,13 +1,13 @@
 // The regular job. Reads every source, works out the nine digits for each button, and writes public/frame-0.json.
 // If a source fails, its tube keeps its last reading and its marker lamp lights. Nothing here can make a tube show a guess.
 const fs = require('fs'), path = require('path');
-const { load, usgsUrl } = require('./load.js');
+const { load, usgsUrl, clock, root } = require('./load.js');
 const M = require('./mapping.js'), S = require('./series.js');
 
-const ROOT = path.join(__dirname, '..');
+const ROOT = root();
 const read = f => (fs.existsSync(path.join(ROOT, f)) ? JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8')) : null);
 const STALE_AFTER = { 0: 3, 1: 10, 30: 100, 365: 1000 };           // days without fresh data before a tube counts as stale
-const ageDays = date => (Date.now() - S.toMs(date)) / S.DAY;
+const ageDays = date => (clock() - S.toMs(date)) / S.DAY;
 
 (async () => {
   const normals = read('data/normals-0.json');
@@ -16,7 +16,7 @@ const ageDays = date => (Date.now() - S.toMs(date)) / S.DAY;
   // on a digit that was set under the old rule.
   const fresh = process.env.FRESH === '1';
   const prev = read('public/frame-0.json'), prevStatus = read('status/latest.json') || { tubes: {} };
-  const now = Date.now(), today = new Date(now).toISOString().slice(0, 10);
+  const now = clock(), today = new Date(now).toISOString().slice(0, 10);
   const status = { made: new Date(now).toISOString(), tubes: {} };
 
   // Each reader returns { values: [today, 90 days, year], latest: 'YYYY-MM-DD', positions: [...] }.

@@ -29,6 +29,7 @@ const ORDER = ['LITHO', 'OCEAN', 'ATMOS', 'CRYO', 'CHEMO', 'CYCLO', 'ANTH', 'PAL
 // How many steps a value sits from normal. Positive means more of the thing measured.
 function position(value, rule) {
   if (value === null || value === undefined || Number.isNaN(value)) return null;
+  if (!(rule.step > 0)) return null;                       // a rule with no step can't place a value
   const f = TRANSFORMS[rule.transform || 'linear'];
   let p = (f(value) - f(rule.normal)) / rule.step;
   // Whole-step tubes change digit when the value crosses a whole step, not half of one. CYCLO uses this so its

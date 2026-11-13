@@ -2,16 +2,16 @@
 // Run once at commissioning, and again only if a source or a rule changes. The daily job reads the saved file,
 // so the instrument keeps its normals even if a source's history later disappears.
 const fs = require('fs'), path = require('path');
-const { load, usgsUrl, sleep } = require('./load.js');
+const { load, usgsUrl, sleep, clock, root } = require('./load.js');
 const { steadyRule } = require('./mapping.js');
 const S = require('./series.js');
 
-const FILE = path.join(__dirname, '..', 'data', 'normals-0.json');
+const FILE = path.join(root(), 'data', 'normals-0.json');
 const PALIN_STEP = 6;   // percentage points. Chosen at commissioning so the Year button read 7.
 
 (async () => {
   const old = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : { tubes: {} };
-  const out = { era: 0, period: '2001-2020', made: new Date().toISOString(), tubes: {} };
+  const out = { era: 0, period: '2001-2020', made: new Date(clock()).toISOString(), tubes: {} };
   const tube = async (name, fn) => {
     try { out.tubes[name] = await fn(); console.log('OK  ', name, JSON.stringify(out.tubes[name]).slice(0, 150)); }
     catch (e) {
@@ -45,6 +45,7 @@ const PALIN_STEP = 6;   // percentage points. Chosen at commissioning so the Yea
     const daily = S.dailySums(events, '2001-01-01', '2020-12-31'), windows = {};
     for (const w of [1, 90, 365]) {
       const sums = S.rollingSums(daily, w).filter(v => v > 0), r = steadyRule(sums, 'log10');
+      if (!(r.step > 0)) throw new Error(`the ${w}-day earthquake totals have no spread, so no step can be set`);
       windows[w] = { normal: +r.normal.toPrecision(5), step: +r.step.toFixed(4), samples: sums.length };
     }
     return { source: 'litho-usgs', transform: 'log10', windows, cadence: 0, unit: 'joules', earthquakes: events.length }; });
