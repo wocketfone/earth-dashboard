@@ -117,6 +117,10 @@ function parseOni(text) {
     .map(c => ({ date: iso(+c[1], SEASONS.indexOf(c[0]) + 1, 15), value: num(c[3]) })));
 }
 
+// A plain dated table: an ISO date first, then the value in the named column position. Used for daily candidates.
+const parseDatedCsv = col => text => sorted(lines(text).map(l => l.split(',')).filter(c => /^\d{4}-\d{2}-\d{2}/.test(c[0] || ''))
+  .map(c => ({ date: c[0].slice(0, 10), value: num(c[col]) })));
+
 const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
 
 // Every address we rely on, in one place. "backup" sources are tried when the main one for that tube fails.
@@ -127,6 +131,15 @@ const SOURCES = [
     url: () => 'https://climatereanalyzer.org/clim/sst_daily/json/oisst2.1_world2_sst_day.json' },
   { id: 'ocean-ncei', tube: 'OCEAN', role: 'backup', parse: parseNceiMonthly,
     url: () => `https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/global/time-series/globe/ocean/tavg/1/0/1990-${new Date().getUTCFullYear()}/data.csv` },
+  // Candidates for daily temperature. Not used by the frame job; the probe reports whether they answer.
+  { id: 'ocean-daily-ecmwf', tube: 'OCEAN', role: 'candidate', parse: parseDatedCsv(1),
+    url: () => 'https://sites.ecmwf.int/data/climatepulse/data/series/era5_daily_series_sst_60S-60N_ocean.csv' },
+  { id: 'atmos-daily-ecmwf', tube: 'ATMOS', role: 'candidate', parse: parseDatedCsv(1),
+    url: () => 'https://sites.ecmwf.int/data/climatepulse/data/series/era5_daily_series_2t_global.csv' },
+  { id: 'ocean-daily-cr', tube: 'OCEAN', role: 'candidate', parse: parseOisstJson,
+    url: () => 'https://climatereanalyzer.org/clim/sst_daily/json_2clim/oisst2.1_world2_sst_day.json' },
+  { id: 'atmos-daily-cr', tube: 'ATMOS', role: 'candidate', parse: parseOisstJson,
+    url: () => 'https://climatereanalyzer.org/clim/t2_daily/json_2clim/era5_world_t2_day.json' },
   { id: 'atmos-gistemp', tube: 'ATMOS', role: 'main', parse: parseGistemp,
     url: () => 'https://data.giss.nasa.gov/gistemp/tabledata_v4/GLB.Ts+dSST.csv' },
   { id: 'atmos-ncei', tube: 'ATMOS', role: 'backup', parse: parseNceiMonthly,
