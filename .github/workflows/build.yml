@@ -1,7 +1,10 @@
-# Reads every source and publishes public/frame-0.json. Runs only when asked, until the schedule is switched on.
+# Reads every source and publishes public/frame-0.json.
+# Runs every hour at 17 minutes past, and whenever it is started by hand.
 name: Build the frame
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
 permissions:
   contents: write
 concurrency: repo-writes
