@@ -399,13 +399,40 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     return r.error ? { why: 'checks', error: r.error } : r;
   }
   const KEEP = ' The tubes keep the last good frame.';
-  async function fetchLive(fetcher = (u, o) => fetch(u, o), nowMs = Date.now(), waitMs = 15000) {
+  // Some viewers (Claude's own is one) don't let a page call outside addresses. There the fetch is handed to the copy of
+  // this emulator on the open web: a small window opens on it, it fetches the file, passes it back, and closes itself.
+  const WEB = 'https://wocketfone.github.io', WEBPAGE = WEB + '/earth-dashboard/', onWeb = location.origin === WEB;
+  let blocked = false, relayTrouble = '';
+  function relayFetcher() {
+    let got = null;
+    return async u => {
+      const clean = u.replace(/[?&]t=\d+$/, '');
+      if (!got) got = new Promise(done => {
+        const w = window.open(WEBPAGE + '?relay=' + encodeURIComponent(clean), 'earthrelay', 'width=460,height=360');
+        if (!w) return done(null);
+        const on = e => { if (e.origin === WEB && e.data && e.data.earthRelay) { window.removeEventListener('message', on); done(e.data.results || {}); } };
+        window.addEventListener('message', on);
+      });
+      const map = await got;
+      if (!map) { relayTrouble = 'popup'; throw new Error('popup'); }
+      const r = map[clean];
+      if (!r || r.error) throw new TypeError('unreachable');
+      return { ok: r.ok, status: r.status, text: async () => r.text };
+    };
+  }
+  async function fetchLive(given = null, nowMs = Date.now(), waitMs = 15000) {
     if (fetching) return null;
     fetching = true; $('fetchnow').disabled = true; setFetch('busy', 'Fetching', '');
     try {
       const url = live ? addressFor(era) : $('fetchurl').value.trim();
       if (!/^https?:\/\//i.test(url)) return setFetch('bad', 'Bad', 'The address has to start with http:// or https://.' + KEEP);
-      const mine = ++ticket, r = await getFrame(url, fetcher, nowMs, waitMs);
+      let fetcher = given || (blocked ? relayFetcher() : (u, o) => fetch(u, o)), relayed = !given && blocked; relayTrouble = '';
+      const mine = ++ticket; let r = await getFrame(url, fetcher, nowMs, waitMs);
+      // First failure in a viewer that blocks outside calls: remember that, and go through the web copy from now on.
+      if (r.why === 'reach' && !given && !blocked && !onWeb) { blocked = relayed = true; fetcher = relayFetcher(); r = await getFrame(url, fetcher, nowMs, waitMs); }
+      const VIA = 'This copy can\'t call outside addresses itself, so it asks the copy on the web to fetch for it. ';
+      if (relayed && relayTrouble === 'popup') return setFetch('bad', 'Bad', VIA + 'The browser blocked the small window that needs. Allow pop-ups and press again, or open wocketfone.github.io/earth-dashboard.' + KEEP);
+      if (relayed && r.why === 'slow') return setFetch('bad', 'Bad', VIA + 'A window opened there, but nothing came back to this copy. Live data works in that window.' + KEEP);
       // If another data set was chosen while this was on its way, that choice stands.
       if (mine !== ticket) return setFetch('none', 'Not used', 'You picked other data while this was fetching, so the fetched file was set aside.');
       if (r.why === 'slow') return setFetch('bad', 'Bad', `No answer after ${Math.round(waitMs / 1000)} seconds, so the fetch was given up.` + KEEP);
@@ -419,11 +446,23 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
       $('scen').value = 'live'; $('scennote').textContent = 'Live readings, fetched from the address above.'; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = '';
       const age = nowMs - Date.parse(r.file.made), when = `Frame ${r.file.seq}, made ${ago(age)}.`;
       if (age > 26 * 3600000) return setFetch('old', 'Old', `${when} The file passed every check, but the fetcher refreshes it at least once a day, so the fetcher has stopped. The tubes show it anyway.`);
+      if (relayed) $('scennote').textContent = 'Live readings, fetched through the copy of this emulator on the web.';
       return setFetch('good', 'Good', `${when} It passed every check. ` + (same ? 'Nothing has changed since the last fetch.' : 'The tubes walk quietly to any new reading.'));
     } finally { fetching = false; $('fetchnow').disabled = false; }
   }
   $('fetchnow').onclick = () => { fetchLive(); };
   ticket = 0;
+  // The other half of the relay. Opened as "?relay=<address>" on the web copy, this page fetches that file (and the next
+  // scale's, if the lamp is lit), hands the answers back to whoever opened it, and closes.
+  const relayFor = new URLSearchParams(location.search).get('relay');
+  if (onWeb && relayFor && /^https:\/\//i.test(relayFor)) (async () => {
+    const one = async u => { try { const res = await Promise.race([fetch(u + (u.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' }), new Promise((_, no) => setTimeout(() => no(new Error('slow')), 10000))]); return { ok: res.ok, status: res.status, text: res.ok ? await res.text() : '' }; } catch (e) { return { error: true }; } };
+    const results = {}; results[relayFor] = await one(relayFor);
+    const p = results[relayFor].ok ? parseFrame(results[relayFor].text) : null;
+    if (p && !p.error && p.file.ready) { const nx = relayFor.replace(/frame-\d+\.json/, `frame-${p.file.era + 1}.json`); if (nx !== relayFor) results[nx] = await one(nx); }
+    if (window.opener) { try { window.opener.postMessage({ earthRelay: 1, results }, '*'); } catch (e) { /* nobody to tell */ } setTimeout(() => window.close(), 400); }
+    else { $('fetchurl').value = relayFor; fetchLive(); }          // no way to pass it back, so show the live data here
+  })();
   $('sendframe').onclick = () => {
     const r = parseFrame($('framebox').value);
     if (r.error) { $('framemsg').textContent = 'Rejected, and the last good frame stays. ' + r.error; return; }
@@ -534,7 +573,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   window.__emu = {
     tubes, press, startLamp, SCEN, SLOW, BASE, DT, parseFrame,
     advance(sec) { manual = true; const n = Math.round(sec / DT); for (let i = 0; i < n; i++) { if (i % 20 === 0) tick(); stepAll(); } tick(); paintState(); },
-    pressReset, fetchLive, fetched: () => ({ ...fetched, live, era, seq: cur.file.seq, next: !!eras[era + 1], busy: fetching }),
+    pressReset, fetchLive, fetched: () => ({ ...fetched, live, blocked, era, seq: cur.file.seq, next: !!eras[era + 1], busy: fetching }),
     // Test hook: switch data set at once, with no walk.
     useScen(k) { scen = k; loadScen(); anim = null; lamp = null; for (let i = 0; i < 9; i++) put(i, cur.frame[mode][i]); },
     state: () => ({ t, mode, phase, asleep, scen, STEP, WALK, era, ready: cur.file.ready, glow: cur.file.glow, halo: ctxs[0].canvas.style.filter,
