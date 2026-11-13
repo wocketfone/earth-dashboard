@@ -27,6 +27,20 @@ function vsRecentYears(rows, n, years = 10) {
   return mean(diffs);
 }
 
+// The same question for daily readings. How the `days` days ending on `end` compare with the same stretch of the calendar
+// in each of the `years` years before. For a single day, each earlier year's stretch is widened by `pool` days either side,
+// so the comparison is with what's usual for that time of year, not with one particular day's weather.
+// byDate: a Map of date to value. Returns null if fewer than eight in ten of those earlier years have enough data.
+const backYears = (date, k) => { const y = +date.slice(0, 4) - k, md = date.slice(4); return md === '-02-29' && new Date(Date.UTC(y, 1, 29)).getUTCMonth() !== 1 ? `${y}-02-28` : `${y}${md}`; };
+function vsRecentAt(byDate, end, days, years = 10, pool = days === 1 ? 7 : 0) {
+  const span = (last, back, fwd) => { const v = []; for (let t = toMs(last) - (days - 1 + back) * DAY; t <= toMs(last) + fwd * DAY; t += DAY) { const x = byDate.get(new Date(t).toISOString().slice(0, 10)); if (x !== undefined && x !== null) v.push(x); } return v; };
+  const now = span(end, 0, 0); if (now.length < Math.ceil(days * 0.8)) return null;
+  const past = [];
+  for (let k = 1; k <= years; k++) { const v = span(backYears(end, k), pool, pool); if (v.length >= Math.ceil((days + 2 * pool) * 0.8)) past.push(mean(v)); }
+  return past.length < Math.ceil(years * 0.8) ? null : mean(now) - mean(past);
+}
+function vsRecentDays(rows, days, years = 10) { return rows.length ? vsRecentAt(new Map(rows.map(r => [r.date, r.value])), rows[rows.length - 1].date, days, years) : null; }
+
 // Sea ice. For each calendar day, the usual extent and its spread over the chosen years (2001-2020 unless told otherwise), pooled over five days.
 function iceClimatology(rows, from = '2001-01-01', to = '2020-12-31') {
   const base = between(rows, from, to), byKey = {};
@@ -80,4 +94,4 @@ function parseHistory(text) {
   return [...byDate.keys()].sort().map(date => ({ date, digits: byDate.get(date) }));
 }
 
-module.exports = { tenYearsBefore, parseHistory,  DAY, toMs, mean, sd, windowMean, vsRecentYears, between, baseline, iceClimatology, iceZ, pairMean, dailySums, rollingSums, energySince };
+module.exports = { vsRecentAt, vsRecentDays, tenYearsBefore, parseHistory,  DAY, toMs, mean, sd, windowMean, vsRecentYears, between, baseline, iceClimatology, iceZ, pairMean, dailySums, rollingSums, energySince };
