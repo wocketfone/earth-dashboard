@@ -79,7 +79,13 @@ function parseNceiMonthly(text) {
 // Value is the energy of each earthquake in joules: log10(E) = 1.5 x magnitude + 4.8.
 function parseUsgsCsv(text) {
   return sorted(lines(text).map(l => l.split(',')).filter(c => /^\d{4}-\d{2}-\d{2}T/.test(c[0] || '') && num(c[4]) !== null)
-    .map(c => ({ date: c[0].slice(0, 10), value: 10 ** (1.5 * num(c[4]) + 4.8) })));
+    .map(c => ({ date: c[0].slice(0, 10), time: Date.parse(c[0]), value: 10 ** (1.5 * num(c[4]) + 4.8) })));
+}
+
+// SILSO estimated sunspot number for the current month. Columns: year, month, day, fraction, number, ...
+function parseEisn(text) {
+  return sorted(lines(text).map(l => l.split(',')).filter(c => c.length >= 5 && num(c[0]) > 1800)
+    .map(c => ({ date: iso(+c[0], +c[1], +c[2]), value: num(c[4]) })).filter(r => r.value !== null && r.value >= 0));
 }
 
 // Our World in Data energy file. We want the World rows and the primary_energy_consumption column, in TWh a year.
@@ -109,10 +115,6 @@ const SOURCES = [
     url: () => 'https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/data/N_seaice_extent_daily_v4.0.csv' },
   { id: 'cryo-south', tube: 'CRYO', role: 'main', parse: parseNsidcDaily,
     url: () => 'https://noaadata.apps.nsidc.org/NOAA/G02135/south/daily/data/S_seaice_extent_daily_v4.0.csv' },
-  { id: 'cryo-north-v3', tube: 'CRYO', role: 'backup', parse: parseNsidcDaily,
-    url: () => 'https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/data/N_seaice_extent_daily_v3.0.csv' },
-  { id: 'cryo-south-v3', tube: 'CRYO', role: 'backup', parse: parseNsidcDaily,
-    url: () => 'https://noaadata.apps.nsidc.org/NOAA/G02135/south/daily/data/S_seaice_extent_daily_v3.0.csv' },
   { id: 'chemo-daily', tube: 'CHEMO', role: 'main', parse: parseCo2Daily,
     url: () => 'https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_trend_gl.csv' },
   { id: 'chemo-monthly', tube: 'CHEMO', role: 'backup', parse: parseCo2Monthly,
@@ -121,6 +123,8 @@ const SOURCES = [
     url: () => 'https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv' },
   { id: 'solar-silso', tube: 'SOLAR', role: 'main', parse: parseSilsoDaily,
     url: () => 'https://www.sidc.be/SILSO/INFO/sndtotcsv.php' },
+  { id: 'solar-eisn', tube: 'SOLAR', role: 'extra', parse: parseEisn,
+    url: () => 'https://www.sidc.be/SILSO/DATA/EISN/EISN_current.csv' },
 ];
 
-module.exports = { get, SOURCES, parseCo2Daily, parseCo2Monthly, parseGistemp, parseSilsoDaily, parseNsidcDaily, parseOisstJson, parseNceiMonthly, parseUsgsCsv, parseOwidEnergy };
+module.exports = { get, SOURCES, parseCo2Daily, parseCo2Monthly, parseGistemp, parseSilsoDaily, parseNsidcDaily, parseOisstJson, parseNceiMonthly, parseUsgsCsv, parseOwidEnergy, parseEisn };

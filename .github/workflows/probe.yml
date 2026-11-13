@@ -1,31 +1,28 @@
-# Tries every data source once and saves a report to status/probe.json.
-# It runs when asked, or when the fetcher code changes. It is not on a schedule.
+# Tries every data source once and saves a report to status/probe.json. Runs only when asked.
 name: Probe data sources
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ['fetcher/**', '.github/workflows/probe.yml']
 permissions:
   contents: write
-concurrency: probe
+concurrency: repo-writes
 jobs:
-  probe:
+  run:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: node fetcher/mapping.test.js
+      - run: node fetcher/series.test.js
       - run: node fetcher/sources.test.js
       - run: node fetcher/probe.js
-      - name: Save the report
+      - name: Save the result
         run: |
           git config user.name "earth-dashboard bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add status/
+          git add -A status data public
           git diff --cached --quiet && exit 0
           git commit -m "Probe report [skip ci]"
           git pull --rebase

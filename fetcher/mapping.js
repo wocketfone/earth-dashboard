@@ -78,11 +78,11 @@ const WINDOWS = [1, 90, 365];                // buttons 1 to 3, in days
 
 // Builds one frame file. positions: three arrays (today, 90 days, year) of nine step-positions, null for no reading.
 // previous: the last file's "d" strings, so the deadband has something to hold on to. baseline: nine digits for button 4.
-function buildFrame({ seq, made, poll = 3600, era = 0, ready = false, glow = '', positions, previous = null, baseline = [5, 5, 5, 5, 5, 5, 5, 5, 5] }) {
+function buildFrame({ seq, made, poll = 3600, era = 0, ready = false, glow = '', positions, previous = null, baseline = [5, 5, 5, 5, 5, 5, 5, 5, 5], cadence = CADENCE, stale = [] }) {
   const prevDigit = (b, i) => { const c = previous && previous[b] ? previous[b][i] : '-'; return c >= '1' && c <= '9' ? +c : null; };
   const rows = positions.map((row, b) => row.map((p, i) => digit(p, prevDigit(b, i))));
   rows.push(baseline.slice());
-  const slow = rows.map((row, b) => row.map((d, i) => b < 3 && d !== null && CADENCE[ORDER[i]] > WINDOWS[b] ? '1' : '0').join(''));
+  const slow = rows.map((row, b) => row.map((d, i) => b < 3 && d !== null && (cadence[ORDER[i]] > WINDOWS[b] || stale.includes(ORDER[i])) ? '1' : '0').join(''));
   const file = { v: 1, seq, made, poll, era, ready, glow, d: rows.map(encode), slow };
   const error = validateFrame(file);
   if (error) throw new Error('Refusing to publish a bad frame: ' + error);
