@@ -1,14 +1,14 @@
 {
  "era": 0,
  "period": "2001-2020",
- "made": "2026-11-13T15:01:56.393Z",
+ "made": "2026-11-13T15:04:28.184Z",
  "tubes": {
   "OCEAN": {
    "source": "ocean-ncei",
    "transform": "linear",
    "normal": 0.538,
    "step": 0.3,
-   "recentStep": 0.1,
+   "recentStep": 0.15,
    "recentYears": 10,
    "cadence": 30,
    "unit": "degrees C",
@@ -19,7 +19,7 @@
    "transform": "linear",
    "normal": 0.727,
    "step": 0.3,
-   "recentStep": 0.1,
+   "recentStep": 0.15,
    "recentYears": 10,
    "cadence": 30,
    "unit": "degrees C",
