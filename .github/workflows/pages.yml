@@ -1,0 +1,29 @@
+# Copies the emulator to the gh-pages branch, which GitHub serves at https://wocketfone.github.io/earth-dashboard/
+# Runs whenever the emulator changes, or by hand.
+name: Publish the emulator
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['emulator/**']
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Wrap each page as a full web page and push it
+        run: |
+          mkdir out && touch out/.nojekyll
+          wrap() { printf '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0}</style></head><body>\n' > "$2"; cat "$1" >> "$2"; printf '\n</body></html>\n' >> "$2"; }
+          wrap emulator/earth-dashboard-emulator.html out/index.html
+          wrap emulator/z550m-emulator.html out/z550m.html
+          cd out
+          git init -q -b gh-pages
+          git config user.name "earth-dashboard bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Publish the emulator"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" gh-pages
