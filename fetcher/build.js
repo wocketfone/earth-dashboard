@@ -84,10 +84,15 @@ const ageDays = date => (clock() - S.toMs(date)) / S.DAY;
     fs.mkdirSync(path.join(ROOT, 'public'), { recursive: true }); fs.mkdirSync(path.join(ROOT, 'status'), { recursive: true });
     fs.writeFileSync(path.join(ROOT, 'public/frame-0.json'), JSON.stringify(file) + '\n');
     fs.writeFileSync(path.join(ROOT, 'status/latest.json'), JSON.stringify(status, null, 1) + '\n');
-    const hist = path.join(ROOT, 'data/year-history.csv'), lines = fs.existsSync(hist) ? fs.readFileSync(hist, 'utf8').trim().split('\n') : ['date,year_digits'];
-    if (lines[lines.length - 1].startsWith(today)) lines.pop();          // keep one line a day, holding that day's latest reading
-    lines.push(`${today},${file.d[2]}`);
-    fs.mkdirSync(path.dirname(hist), { recursive: true }); fs.writeFileSync(hist, lines.join('\n') + '\n');
     console.log(changed ? 'Published a new frame:' : 'Refreshed the frame:', JSON.stringify(file));
   } else console.log('Nothing changed. The published frame stands.');
+
+  // The reset rule needs one line a day holding that day's latest Year digits. This is kept even when the frame didn't change.
+  const hist = path.join(ROOT, 'data/year-history.csv'), want = `${today},${file.d[2]}`;
+  const lines = fs.existsSync(hist) ? fs.readFileSync(hist, 'utf8').trim().split('\n') : ['date,year_digits'];
+  if (lines[lines.length - 1] !== want) {
+    if (lines[lines.length - 1].startsWith(today)) lines.pop();
+    lines.push(want);
+    fs.mkdirSync(path.dirname(hist), { recursive: true }); fs.writeFileSync(hist, lines.join('\n') + '\n');
+  }
 })().catch(e => { console.error(e); process.exit(1); });

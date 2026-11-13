@@ -68,6 +68,10 @@ ok(fs.readFileSync(path.join(R, 'data/year-history.csv'), 'utf8') === `date,year
 const before = fs.readFileSync(path.join(R, 'public/frame-0.json'), 'utf8');
 r = run('build.js', R, F, { EARTH_NOW: '2026-11-13T13:00:00Z' }); ok(r.code === 0 && /Nothing changed/.test(r.out), 'B an hour later with the same data: nothing written');
 ok(fs.readFileSync(path.join(R, 'public/frame-0.json'), 'utf8') === before, 'B the file is byte-for-byte the same');
+// B2: a stale history line is corrected even when the frame itself doesn't change, and a new day gets its line without a frame write
+fs.writeFileSync(path.join(R, 'data/year-history.csv'), 'date,year_digits\n2026-11-13,111111111\n');
+r = run('build.js', R, F, { EARTH_NOW: '2026-11-13T14:00:00Z' }); ok(/Nothing changed/.test(r.out) && fs.readFileSync(path.join(R, 'data/year-history.csv'), 'utf8') === `date,year_digits\n2026-11-13,${f.d[2]}\n`, 'B2 stale history line corrected');
+ok(fs.readFileSync(path.join(R, 'public/frame-0.json'), 'utf8') === before, 'B2 the frame is still untouched');
 // C: the daily refresh
 r = run('build.js', R, F, { EARTH_NOW: '2026-11-14T10:00:00Z' }); f = J(R, 'public/frame-0.json');
 ok(r.code === 0 && f.made === '2026-11-14T10:00:00.000Z', 'C after 20 hours the file is refreshed'); ok(M.validateFrame(f) === null, 'C still valid');
