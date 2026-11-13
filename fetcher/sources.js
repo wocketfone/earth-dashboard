@@ -5,16 +5,24 @@
 const HEADERS = { 'User-Agent': 'earth-dashboard (https://github.com/wocketfone/earth-dashboard)' };
 
 // Fetches an address once per run. Two tubes share one large file, so the second asker gets the saved copy.
+// A dropped connection or a server having a bad moment (a 5xx answer) gets two more tries, a few seconds apart.
 const fetched = new Map();
-async function get(url, timeoutMs = 90000) {
+async function get(url, timeoutMs = 90000, tries = 3, waitMs = 4000) {
   if (fetched.has(url)) return fetched.get(url);
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { headers: HEADERS, signal: ctl.signal, redirect: 'follow' });
-    const out = { status: res.status, ok: res.ok, text: await res.text() };
-    if (out.ok) fetched.set(url, out);
-    return out;
-  } finally { clearTimeout(timer); }
+  let out, failure;
+  for (let n = 1; n <= tries; n++) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutMs);
+    out = failure = undefined;
+    try {
+      const res = await fetch(url, { headers: HEADERS, signal: ctl.signal, redirect: 'follow' });
+      out = { status: res.status, ok: res.ok, text: await res.text() };
+    } catch (e) { failure = e; } finally { clearTimeout(timer); }
+    if (out && (out.ok || out.status < 500)) break;                  // an answer like 404 won't change by asking again
+    if (n < tries) await new Promise(r => setTimeout(r, waitMs * n));
+  }
+  if (!out) throw failure;
+  if (out.ok) fetched.set(url, out);
+  return out;
 }
 
 const pad = n => String(n).padStart(2, '0');
