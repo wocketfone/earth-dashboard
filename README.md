@@ -69,7 +69,9 @@ To test changes on your own computer, install Node.js and run the four test file
 
 ## What isn't finished?
 
-- **OCEAN uses a monthly source.** A daily one would be better.
+- **The reset colours are placeholders.** They're the `GLOWS` list near the top of `fetcher/build.js`.
+- **The instrument's own firmware isn't in this repository.** That's being written by Oscilloclock.
+
 
 ## Who made it?
 

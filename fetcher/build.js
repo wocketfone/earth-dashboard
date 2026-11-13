@@ -48,9 +48,30 @@ const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { rec
     return { values, latest: end, positions: [M.position(values[0], recent), M.position(values[1], recent), M.position(values[2], n)],
       note: 'Today and 90 days are degrees above the same months of the last ten years. Year is the level; normal is ' + n.normal + '.' };
   };
+  // The same two questions from a daily source: today and the last 90 days against the same days of the last ten years.
+  const twoQuestionsDaily = (all, n) => {
+    const rows = all.filter(r => r.value !== null), end = rows[rows.length - 1].date, recent = { transform: 'linear', normal: 0, step: n.recentStep };
+    const values = [S.vsRecentDays(rows, 1, n.recentYears), S.vsRecentDays(rows, 90, n.recentYears), S.windowMean(rows, end, 365)];
+    return { values, latest: end, positions: [M.position(values[0], recent), M.position(values[1], recent), M.position(values[2], n)],
+      note: 'Today and 90 days are degrees above the same days of the last ten years. Year is the level; normal is ' + n.normal + '.' };
+  };
+  // Daily first. If the daily source fails or has gone quiet for ten days, the monthly backup answers, on its own normal,
+  // and the tube's lamp lights on the buttons a monthly source is too slow for.
+  const temperature = async (n, dailyId, monthlyId) => {
+    if (!n.daily) return twoQuestions(await load(monthlyId), n);
+    let daily, why;
+    try { daily = twoQuestionsDaily(await load(dailyId), n); if (ageDays(daily.latest) <= STALE_AFTER[1]) return daily; why = 'has published nothing new since ' + daily.latest; } catch (e) { why = 'failed: ' + e.message; }
+    if (n.fallback) try {
+      const r = twoQuestions(await load(monthlyId), { ...n, ...n.fallback });
+      const covers = new Date(Date.UTC(+r.latest.slice(0, 4), +r.latest.slice(5, 7), 0)).toISOString().slice(0, 10);     // a monthly figure speaks for its whole month
+      if (!daily || covers > daily.latest) return { ...r, cadence: n.fallback.cadence, source: n.fallback.source, note: r.note + ` This is the monthly backup, because the daily source ${why}.` };
+    } catch (e) { /* the backup failed too */ }
+    if (daily) return daily;
+    throw new Error(`${dailyId} ${why}`);
+  };
   const readers = {
-    OCEAN: async n => twoQuestions(await load('ocean-ncei'), n),
-    ATMOS: async n => twoQuestions(await load('atmos-gistemp'), n),
+    OCEAN: async n => temperature(n, 'ocean-daily-ecmwf', 'ocean-ncei'),
+    ATMOS: async n => temperature(n, 'atmos-daily-ecmwf', 'atmos-gistemp'),
     CHEMO: async n => { let rows; try { rows = await load('chemo-daily'); } catch (e) { rows = await load('chemo-monthly'); } return three(rows, n); },
     CRYO: async n => three(S.pairMean(S.iceZ(await load('cryo-north'), n.clim.north), S.iceZ(await load('cryo-south'), n.clim.south)), n),
     SOLAR: async n => {
@@ -90,8 +111,9 @@ const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { rec
     try {
       if (!n || n.error || !readers[name]) throw new Error(n && n.error ? n.error : 'No reader for this tube.');
       const r = await readers[name](n);
-      status.tubes[name] = { ok: true, source: n.source, unit: n.unit, latest: r.latest, ...(r.note ? { about: r.note } : {}), values: r.values, positions: r.positions.map(p => (p === null || !Number.isFinite(p) ? p : +p.toFixed(3))) };
-      if (ageDays(r.latest) > STALE_AFTER[n.cadence]) { stale.push(name); status.tubes[name].note = 'The source has not published anything new for a while.'; }
+      if (r.cadence !== undefined) cadence[name] = r.cadence;
+      status.tubes[name] = { ok: true, source: r.source || n.source, unit: n.unit, latest: r.latest, ...(r.note ? { about: r.note } : {}), values: r.values, positions: r.positions.map(p => (p === null || !Number.isFinite(p) ? p : +p.toFixed(3))) };
+      if (ageDays(r.latest) > STALE_AFTER[cadence[name]]) { stale.push(name); status.tubes[name].note = 'The source has not published anything new for a while.'; }
       console.log(tag, 'OK  ', name, r.latest, r.values.map(v => (v === null ? 'none' : +v.toPrecision(5))).join(', '));
     } catch (e) {
       console.log(tag, 'FAIL', name, e.message);

@@ -16,6 +16,10 @@ function fixtures(dir, opt = {}) {
   w('ocean-ncei', '# Global Ocean\nDate,Anomaly\n' + months(1990, 2026, 10).map(([y, m]) => `${y}${pad(m)},${temp([y])}`).join('\n') + '\n');
   const g = {}; months(1990, 2026, 10).forEach(([y, m]) => { (g[y] = g[y] || Array(12).fill('***'))[m - 1] = temp([y]); });
   w('atmos-gistemp', 'Land-Ocean: Global Means\nYear,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec,J-D\n' + Object.keys(g).map(y => `${y},${g[y].join(',')},***`).join('\n') + '\n');
+  // daily temperatures: an absolute level with a season in it, on the same story as the monthly files
+  const season = d => 2 * Math.cos(2 * Math.PI * ((Date.parse(d + 'T00:00:00Z') - Date.UTC(+d.slice(0, 4), 0, 1)) / DAY) / 365.25);
+  const daily = (base, warm) => 'date,value,anomaly\n' + days('1990-01-01', opt.dailyEnds || '2026-11-11').map(d => { const y = +d.slice(0, 4); return `${d},${(base + season(d) + (hot ? (y >= 2018 ? 2.5 : 0.5) : y >= 2026 ? warm : 0.5)).toFixed(4)},0`; }).join('\n') + '\n';
+  w('ocean-daily-ecmwf', daily(20, 0.8)); w('atmos-daily-ecmwf', daily(14, 0.9));
   w('chemo-monthly', 'year,month,decimal,average,average_unc,trend,trend_unc\n' + months(1979, 2026, 10).map(([y, m]) => `${y},${m},${y},0,0,${hot ? (y >= 2018 ? 480 : 390) : y >= 2026 ? 430 : 390},0`).join('\n') + '\n');
   w('chemo-daily', 'year,month,day,smoothed,trend\n' + days('2016-01-01', '2026-11-12').map(d => `${+d.slice(0, 4)},${+d.slice(5, 7)},${+d.slice(8)},0,${hot ? (d >= '2018-01-01' ? 480 : 390) : d >= '2025-11-01' ? 430 : 390}`).join('\n') + '\n');
   const ice = base => 'Year, Month, Day, Extent, Missing, Source\nYYYY, MM, DD, x, x, x\n' + days('1990-01-01', '2026-11-12').map(d => {
@@ -47,7 +51,9 @@ const [R, F] = sandbox('a');
 let r = run('build.js', R, F); ok(r.code !== 0 && /normals-0.json is missing/.test(r.out), 'A build refuses to run without normals');
 r = run('normals.js', R, F); ok(r.code === 0, 'A normals job runs: ' + r.out.slice(-200));
 const N = J(R, 'data/normals-0.json').tubes;
-ok(N.OCEAN.normal === 0.5 && N.ATMOS.normal === 0.5 && N.OCEAN.step === 0.3 && N.OCEAN.recentStep === 0.15, 'A temperature normals: ' + N.OCEAN.normal + ', ' + N.ATMOS.normal);
+ok(Math.abs(N.OCEAN.normal - 20.5) < 0.01 && Math.abs(N.ATMOS.normal - 14.5) < 0.01 && N.OCEAN.daily && N.ATMOS.daily && N.OCEAN.cadence === 1, 'A temperature normals come from the daily files: ' + N.OCEAN.normal + ', ' + N.ATMOS.normal);
+ok(N.OCEAN.step === 0.3 && N.ATMOS.step === 0.3 && N.OCEAN.recentStep === 0.15 && N.ATMOS.recentStep === 0.2, 'A steps: 0.3 on Year; 0.15 for the sea and 0.2 for the air on the others');
+ok(N.OCEAN.fallback.normal === 0.5 && N.ATMOS.fallback.normal === 0.5 && N.OCEAN.fallback.recentStep === 0.15 && N.ATMOS.fallback.source === 'atmos-gistemp', 'A each keeps a monthly backup with its own normal');
 ok(N.CHEMO.normal === 390 && N.CHEMO.step === 20, 'A CHEMO normal 390'); ok(N.SOLAR.normal === 49 && N.SOLAR.transform === 'sqrt', 'A SOLAR normal 49');
 ok(N.ANTH.normal === 100000 && N.ANTH.step === 15000, 'A ANTH normal and 15% step'); ok(N.PALIN.normal === 20 && N.PALIN.step === 6, 'A PALIN normal 20, step 6');
 ok(N.CYCLO.normal === 0 && N.CYCLO.step === 0.5 && N.CYCLO.wholeSteps === true, 'A CYCLO rule'); ok(Object.keys(N.CRYO.clim.north).length === 366 && Math.abs(N.CRYO.clim.north['07-01'].sd - 0.5) < 0.05, 'A ice climatology');
@@ -56,11 +62,12 @@ ok(M.ORDER.every(n => !N[n].error), 'A every tube has a normal');
 r = run('build.js', R, F); ok(r.code === 0, 'A frame job runs: ' + r.out.slice(-300));
 let f = J(R, 'public/frame-0.json'), st = J(R, 'status/latest.json');
 ok(M.validateFrame(f) === null, 'A frame passes the board checks');
-ok(col(f, IDX.OCEAN) === '776' && col(f, IDX.ATMOS) === '776', 'A OCEAN and ATMOS: 0.3 above the last ten years reads 7, 7; year reads 6. Got ' + col(f, IDX.OCEAN) + ' ' + col(f, IDX.ATMOS));
+ok(col(f, IDX.OCEAN) === '776' && col(f, IDX.ATMOS) === '776', 'A OCEAN 0.3 above the same days of the last ten years, at 0.15 a step, reads 7, 7; ATMOS 0.4 above at 0.2 a step reads 7, 7; year reads 6. Got ' + col(f, IDX.OCEAN) + ' ' + col(f, IDX.ATMOS));
 ok(col(f, IDX.CHEMO) === '777', 'A CHEMO 40 ppm above normal reads 7: ' + col(f, IDX.CHEMO)); ok(col(f, IDX.ANTH) === '777' && col(f, IDX.PALIN) === '777', 'A ANTH and PALIN read 7');
 ok(col(f, IDX.CYCLO) === '765', 'A CYCLO: 1.2 moderate, 0.8 weak, 0.2 neutral. Got ' + col(f, IDX.CYCLO)); ok(col(f, IDX.SOLAR) === '777', 'A SOLAR 100 spots against 49 reads 7: ' + col(f, IDX.SOLAR));
 ok(col(f, IDX.CRYO) === '222', 'A CRYO well below normal reads 2: ' + col(f, IDX.CRYO)); ok(/^[1-9]{3}$/.test(col(f, IDX.LITHO)), 'A LITHO has three readings: ' + col(f, IDX.LITHO));
-ok(f.d[3] === '555555555', 'A baseline is nine 5s'); ok(eq(f.slow, ['011001110', '000000110', '000000000', '000000000']), 'A marker lamps: monthly and yearly sources only. Got ' + f.slow);
+ok(f.d[3] === '555555555', 'A baseline is nine 5s'); ok(eq(f.slow, ['000001110', '000000110', '000000000', '000000000']), 'A marker lamps: monthly and yearly sources only, so not OCEAN or ATMOS now. Got ' + f.slow);
+ok(st.tubes.OCEAN.source === 'ocean-daily-ecmwf' && st.tubes.OCEAN.latest === '2026-11-11' && Math.abs(st.tubes.OCEAN.values[0] - 0.3) < 0.015 && Math.abs(st.tubes.ATMOS.values[1] - 0.4) < 0.015, 'A status shows the daily source and the real differences: ' + st.tubes.OCEAN.values);
 ok(f.seq === 1 && f.era === 0 && f.ready === false && f.glow === '' && f.made === '2026-11-13T12:00:00.000Z', 'A first frame header');
 ok(M.ORDER.every(n => st.tubes[n].ok === true), 'A status says every tube is healthy'); ok(st.tubes.CHEMO.values[0] === 430 && st.tubes.PALIN.values[0] === 32, 'A status carries the real figures');
 ok(fs.readFileSync(path.join(R, 'data/year-history.csv'), 'utf8') === `date,year_digits\n2026-11-13,${f.d[2]}\n`, 'A history has one line for today');
@@ -79,7 +86,7 @@ ok(r.code === 0 && f.made === '2026-11-14T10:00:00.000Z', 'C after 20 hours the 
 ok(fs.readFileSync(path.join(R, 'data/year-history.csv'), 'utf8').trim().split('\n').length === 3, 'C history gains one line for the new day, and only one');
 
 // D, E, F: sources fail in different ways and each tube holds its last reading
-for (const [label, tube, breakIt] of [['D a source disappears', 'OCEAN', f2 => fs.unlinkSync(path.join(f2, 'ocean-ncei.txt'))], ['E a source returns a web page instead of data', 'ATMOS', f2 => fs.writeFileSync(path.join(f2, 'atmos-gistemp.txt'), '<html><body>Moved</body></html>')],
+for (const [label, tube, breakIt] of [['D a source and its backup disappear', 'OCEAN', f2 => { fs.unlinkSync(path.join(f2, 'ocean-ncei.txt')); fs.unlinkSync(path.join(f2, 'ocean-daily-ecmwf.txt')); }], ['E a source and its backup return a web page instead of data', 'ATMOS', f2 => { for (const id of ['atmos-gistemp', 'atmos-daily-ecmwf']) fs.writeFileSync(path.join(f2, id + '.txt'), '<html><body>Moved</body></html>'); }],
   ['F the earthquake feed is down', 'LITHO', f2 => fs.unlinkSync(path.join(f2, 'litho-usgs.txt'))], ['F2 both ice files vanish', 'CRYO', f2 => { fs.unlinkSync(path.join(f2, 'cryo-north.txt')); fs.unlinkSync(path.join(f2, 'cryo-south.txt')); }]]) {
   const [r2, f2] = sandbox(label.slice(0, 2).trim() + tube); run('normals.js', r2, f2); run('build.js', r2, f2); const good = J(r2, 'public/frame-0.json');
   breakIt(f2); const res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z' }), bad = J(r2, 'public/frame-0.json'), s2 = J(r2, 'status/latest.json'), i = IDX[tube];
@@ -126,9 +133,9 @@ const pastDays = (n, row) => 'date,year_digits\n' + Array.from({ length: n }, (_
   ok(res.code === 0 && /Reset due/.test(res.out) && /Scale 1 is live/.test(res.out), 'K 365 pinned days: the reset runs by itself: ' + res.out.slice(-200));
   const n0 = J(r2, 'data/normals-0.json'), n1 = J(r2, 'data/normals-1.json'), a = J(r2, 'public/frame-0.json'), b = J(r2, 'public/frame-1.json');
   ok(n1.era === 1 && n1.since === '2026-11-13' && n1.glow === '7A5CFF' && n1.period === '2016-11-14 to 2026-11-13' && !n1.carried, 'K the new scale is described: ' + n1.period);
-  ok(n1.tubes.OCEAN.normal === 2.2667 && n1.tubes.ATMOS.normal === 2.2667, 'K temperature normal is the ten-year average, 2.2667: ' + n1.tubes.OCEAN.normal);
+  ok(Math.abs(n1.tubes.OCEAN.normal - 22.2737) < 0.01 && Math.abs(n1.tubes.ATMOS.normal - 16.2737) < 0.01 && n1.tubes.OCEAN.fallback.normal === 2.2667, 'K temperature normal is the ten-year average of the daily file, and the backup gets its own: ' + n1.tubes.OCEAN.normal);
   ok(n1.tubes.CHEMO.normal === 469.5 && n1.tubes.ANTH.normal === 188889 && n1.tubes.PALIN.normal === 26.67 && n1.tubes.CYCLO.normal === 0, 'K CHEMO 469.5, ANTH 188889, PALIN 26.67, CYCLO 0: ' + [n1.tubes.CHEMO.normal, n1.tubes.ANTH.normal, n1.tubes.PALIN.normal]);
-  ok(['OCEAN', 'ATMOS', 'CHEMO', 'CRYO', 'SOLAR', 'ANTH', 'PALIN', 'CYCLO'].every(n => n1.tubes[n].step === n0.tubes[n].step) && n1.tubes.OCEAN.recentStep === 0.15 && [1, 90, 365].every(w => n1.tubes.LITHO.windows[w].step === n0.tubes.LITHO.windows[w].step), 'K every step is unchanged');
+  ok(['OCEAN', 'ATMOS', 'CHEMO', 'CRYO', 'SOLAR', 'ANTH', 'PALIN', 'CYCLO'].every(n => n1.tubes[n].step === n0.tubes[n].step) && n1.tubes.OCEAN.recentStep === 0.15 && n1.tubes.ATMOS.recentStep === 0.2 && n1.tubes.ATMOS.fallback.recentStep === 0.15 && [1, 90, 365].every(w => n1.tubes.LITHO.windows[w].step === n0.tubes.LITHO.windows[w].step), 'K every step is unchanged');
   ok(n1.tubes.CRYO.clim.north['07-01'].sd === n0.tubes.CRYO.clim.north['07-01'].sd && n1.tubes.CRYO.clim.north['07-01'].mean !== n0.tubes.CRYO.clim.north['07-01'].mean, 'K ice: the usual extent moves, the spread stays');
   const mem = Object.fromEntries(M.ORDER.map((n, i) => [n, n1.memory[i]]));
   ok(mem.OCEAN === 1 && mem.ATMOS === 1 && mem.CHEMO === 2 && mem.ANTH === 1 && mem.PALIN === 4 && mem.CYCLO === 5 && mem.SOLAR === 5 && mem.CRYO === 5 && mem.LITHO >= 1 && mem.LITHO <= 9, 'K button 4 shows the old normal on the new scale: ' + n1.memory.join(''));
@@ -200,5 +207,26 @@ const pastDays = (n, row) => 'date,year_digits\n' + Array.from({ length: n }, (_
 { const [r2, f2, f0] = hotBox('s'); const cut = text(f2, 'anth-owid.txt').split('\n').filter(l => !/^World,(2024|2025),/.test(l)).join('\n'); fs.writeFileSync(path.join(f2, 'anth-owid.txt'), cut); fs.writeFileSync(path.join(f2, 'palin-owid.txt'), cut);
   run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T12:30:00Z' }); fs.writeFileSync(path.join(r2, 'data/year-history.csv'), pastDays(364, J(r2, 'public/frame-0.json').d[2])); const res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z' }), n1 = has(r2, 'data/normals-1.json') ? J(r2, 'data/normals-1.json') : { tubes: { ANTH: {} } };
   ok(res.code === 0 && !n1.carried && n1.tubes.ANTH.years === 7 && n1.tubes.ANTH.normal === Math.round((100000 + 6 * 200000) / 7), 'S seven yearly figures in the ten years are enough: ' + JSON.stringify(n1.tubes.ANTH).slice(0, 120)); }
+// T: daily temperatures and their monthly backup
+{ const box = (name, opt) => { const r2 = path.join(tmp, name), f2 = path.join(tmp, name + '-fix'); fs.mkdirSync(r2); fixtures(f2); run('normals.js', r2, f2); run('build.js', r2, f2); return [r2, f2, J(r2, 'public/frame-0.json')]; };
+  for (const [label, breakIt, why] of [['the daily file disappears', f2 => fs.unlinkSync(path.join(f2, 'ocean-daily-ecmwf.txt')), /the daily source failed/], ['the daily file is a web page', f2 => fs.writeFileSync(path.join(f2, 'ocean-daily-ecmwf.txt'), '<html>'), /the daily source failed/],
+    ['the daily file went quiet three weeks ago', f2 => fixtures(f2, { dailyEnds: '2026-10-22' }), /has published nothing new since 2026-10-22/]]) {
+    const [r2, f2, good] = box('t-' + label.replace(/ /g, '').slice(0, 14)); breakIt(f2); const res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z' }), g = J(r2, 'public/frame-0.json'), s2 = J(r2, 'status/latest.json').tubes.OCEAN;
+    ok(res.code === 0 && s2.ok === true && s2.source === 'ocean-ncei' && why.test(s2.about), `T ${label}: OCEAN reads from the monthly backup and says why: ${s2.about}`);
+    ok(col(g, IDX.OCEAN) === '776', `T ${label}: the backup's reading on its own normal: ${col(g, IDX.OCEAN)}`); ok(slowCol(g, IDX.OCEAN) === '100', `T ${label}: the lamp lights on Today, as a monthly source should: ${slowCol(g, IDX.OCEAN)}`);
+    if (!/quiet/.test(label)) ok(slowCol(g, IDX.ATMOS) === '000' && J(r2, 'status/latest.json').tubes.ATMOS.source === 'atmos-daily-ecmwf', `T ${label}: ATMOS is untouched and still daily`);
+    fixtures(f2); run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T14:00:00Z' }); ok(J(r2, 'status/latest.json').tubes.OCEAN.source === 'ocean-daily-ecmwf' && slowCol(J(r2, 'public/frame-0.json'), IDX.OCEAN) === '000', `T ${label}: when the daily source returns, so does the tube`); }
+  { const [r2, f2] = box('t-both'); fixtures(f2, { dailyEnds: '2026-10-22' }); fs.unlinkSync(path.join(f2, 'ocean-ncei.txt')); fs.unlinkSync(path.join(f2, 'atmos-gistemp.txt')); const res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z' }), g = J(r2, 'public/frame-0.json'), s2 = J(r2, 'status/latest.json').tubes.OCEAN;
+    ok(res.code === 0 && s2.ok && s2.source === 'ocean-daily-ecmwf' && slowCol(g, IDX.OCEAN) === '111' && /^[1-9]{3}$/.test(col(g, IDX.OCEAN)), 'T daily gone quiet and no backup: the quiet daily reading stays, with its lamp lit on every button'); }
+  // commissioning without the daily file leaves the tube on the monthly rule, and the frame job follows
+  { const r2 = path.join(tmp, 't-nodaily'), f2 = path.join(tmp, 't-nodaily-fix'); fs.mkdirSync(r2); fixtures(f2); fs.unlinkSync(path.join(f2, 'atmos-daily-ecmwf.txt')); run('normals.js', r2, f2); const n = J(r2, 'data/normals-0.json').tubes.ATMOS;
+    ok(!n.daily && n.source === 'atmos-gistemp' && n.normal === 0.5 && n.recentStep === 0.15 && n.cadence === 30, 'T no daily file at commissioning: ATMOS keeps the monthly rule'); const res = run('build.js', r2, f2), g = J(r2, 'public/frame-0.json');
+    ok(res.code === 0 && col(g, IDX.ATMOS) === '776' && slowCol(g, IDX.ATMOS) === '100' && col(g, IDX.OCEAN) === '776' && slowCol(g, IDX.OCEAN) === '000', 'T and reads as before, while OCEAN is daily'); }
+  // the daily comparison itself: a leap day, and a file with holes
+  { const S2 = require('./series.js'), mk = fn => days('2010-01-01', '2028-02-29').map(d => ({ date: d, value: fn(d) })), flat = mk(d => (d >= '2028-01-01' ? 11 : 10));
+    ok(Math.abs(S2.vsRecentDays(flat, 1) - 1) < 1e-9 && Math.abs(S2.vsRecentDays(flat, 90) - (60 / 90)) < 1e-9, 'T on 29 February the comparison still finds its ten earlier years');
+    const holes = flat.filter(r => !/^201[5-6]/.test(r.date)); ok(Math.abs(S2.vsRecentDays(holes, 1) - 1) < 1e-9, 'T two missing years out of ten is still enough'); ok(S2.vsRecentDays(flat.filter(r => !/^201[8-9]|^202[0-2]/.test(r.date)), 1) === null, 'T five missing years is not');
+    ok(S2.vsRecentDays([], 1) === null && S2.vsRecentDays(flat.slice(-200), 90) === null, 'T no history gives no reading');
+    const seasonal = mk(d => 10 + 5 * Math.cos(2 * Math.PI * (Date.parse(d) / DAY % 365.25) / 365.25)); ok(Math.abs(S2.vsRecentDays(seasonal, 1)) < 0.05 && Math.abs(S2.vsRecentDays(seasonal, 90)) < 0.05, 'T a pure season reads as no change: ' + S2.vsRecentDays(seasonal, 1)); } }
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`build: PASS ${pass}  FAIL ${fail}`); process.exit(fail ? 1 : 0);

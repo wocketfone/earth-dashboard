@@ -31,7 +31,7 @@ The first time a tube is read, there's no previous digit, so plain rounding appl
 |---|---|---|---|---|---|
 | LITHO | Earthquake energy in the window | Curved (each step is a fixed ratio) | The typical window of that length, 2001–2020 | Set from the data | No |
 | OCEAN | Sea surface temperature | Straight | Two questions; see below | 0.3 °C on Year; 0.15 °C on Today and 90 days | Yes |
-| ATMOS | Surface air temperature | Straight | Two questions; see below | 0.3 °C on Year; 0.15 °C on Today and 90 days | Yes |
+| ATMOS | Surface air temperature | Straight | Two questions; see below | 0.3 °C on Year; 0.2 °C on Today and 90 days | Yes |
 | CRYO | Sea ice, Arctic and Antarctic averaged | Straight | Both poles at their usual extent for the date | 0.75 standard deviations | Yes |
 | CHEMO | Carbon dioxide | Straight | 390.6 ppm | 20 ppm | Yes |
 | CYCLO | El Niño and La Niña index (Niño 3.4) | Straight, whole steps | A neutral Pacific | 0.5 °C | No |
@@ -44,13 +44,17 @@ On the SOLAR curve, a spotless sun reads 1, an average sun reads 5, and about 20
 OCEAN and ATMOS ask two questions, because their long climb would otherwise leave them stuck near 9.
 
 - **Year** compares the last twelve months with the 2001–2020 average, at 0.3 °C a step. This is the long story, and it's the only one of the two that counts toward a reset.
-- **Today and 90 days** compare the latest month, or the latest three, with the same months of the last ten years, at 0.15 °C a step. On these buttons, 5 means typical for the recent decade. They rise in an El Niño and fall in a La Niña.
+- **Today and 90 days** compare the latest day, or the latest 90 days, with the same days of the last ten years. On these buttons, 5 means typical for the recent decade. They rise in an El Niño and fall in a La Niña.
+- **The step on those two buttons fits each tube's own swing.** It's 0.15 °C for OCEAN and 0.2 °C for ATMOS, because air temperature swings about half as much again as the sea's. Across the last twenty years, that puts nearly every day between 4 and 8, with 9 kept for the very top.
+- **For a single day, the comparison is widened.** Today is compared with the same fortnight in each earlier year, so it's set against what's usual for the time of year, not one earlier day's weather.
+
+Both tubes read a daily file from ECMWF, the European weather centre, which runs about two days behind. If that file fails or goes quiet for ten days, the tube switches by itself to its older monthly source (NOAA for the sea, NASA for the air). The monthly source has its own normal and a 0.15 °C step, and the tube's marker lamp lights on Today while it's in use.
 
 Because the planet is warming, an ordinary year sits a little above the average of the ten before it. So on Today and 90 days these two tubes will tend to rest around 6, not 5.
 
 CYCLO changes digit when the index crosses a whole step, not half of one. That lines its digits up with the official strengths: 5 is neutral, 6 is a weak El Niño (0.5 °C), 7 is moderate (1.0), 8 is strong (1.5), and 9 is very strong (2.0 or more). La Niña mirrors that on the left.
 
-PALIN is the one tube where leaning right is good news. It doesn't count toward a reset for that reason.
+PALIN is the one tube where leaning right is good news. It doesn't count toward a reset for that reason. That's decided, not a placeholder. PALIN still gets a new normal when a reset happens.
 
 ## How are "set from the data" steps chosen?
 
@@ -103,4 +107,5 @@ The reset has also been rehearsed against the real sources. The "Rehearse a rese
 
 ## What isn't settled?
 
-- OCEAN uses a monthly source. A daily one would be better.
+- The reset colours in the file are placeholders. Blue or purple is the idea; the shades haven't been picked.
+

@@ -33,10 +33,22 @@ async function computeNormals({ era = 0, from = '2001-01-01', to = '2020-12-31',
   // Steps never change at a reset. That keeps the old and new scales comparable.
   const kept = (name, key, atStart) => { if (first) return atStart; if (!old(name) || old(name)[key] === undefined) throw new Error('the scale before this one has no step to keep'); return old(name)[key]; };
 
-  await tube('OCEAN', async () => { const b = need(span(await load('ocean-ncei')), 12, 'months');
-    return { source: 'ocean-ncei', transform: 'linear', normal: meanOf(b), step: kept('OCEAN', 'step', 0.3), recentStep: kept('OCEAN', 'recentStep', 0.15), recentYears: 10, cadence: 30, unit: 'degrees C', months: b.length }; });
-  await tube('ATMOS', async () => { const b = need(span(await load('atmos-gistemp')), 12, 'months');
-    return { source: 'atmos-gistemp', transform: 'linear', normal: meanOf(b), step: kept('ATMOS', 'step', 0.3), recentStep: kept('ATMOS', 'recentStep', 0.15), recentYears: 10, cadence: 30, unit: 'degrees C', months: b.length }; });
+  // OCEAN and ATMOS read a daily source, with the older monthly one kept as a backup. The two measure slightly different
+  // things, so each gets its own normal. If the daily source can't be read here, the tube stays on its monthly rule.
+  const temperature = (name, dailyId, monthlyId, recentStep) => tube(name, async () => {
+    const before = old(name) || {}, keptRecent = first ? recentStep : kept(name, 'recentStep', recentStep);
+    let fallback;
+    try { const m = need(span(await load(monthlyId)), 12, 'months'); fallback = { source: monthlyId, normal: meanOf(m), recentStep: first ? 0.15 : (before.fallback || before).recentStep || 0.15, cadence: 30, months: m.length }; }
+    catch (e) { log('    ', name, 'has no monthly backup:', e.message); if (!first && before.fallback) fallback = before.fallback; }
+    let d;
+    try { d = need(span((await load(dailyId)).filter(r => r.value !== null)), 365.25, 'days'); }
+    catch (e) { if (!fallback) throw e; log('    ', name, 'daily source failed, using the monthly rule:', e.message);
+      return { source: monthlyId, transform: 'linear', normal: fallback.normal, step: kept(name, 'step', 0.3), recentStep: fallback.recentStep, recentYears: 10, cadence: 30, unit: 'degrees C', months: fallback.months }; }
+    return { source: dailyId, daily: true, transform: 'linear', normal: meanOf(d), step: kept(name, 'step', 0.3), recentStep: keptRecent, recentYears: 10, cadence: 1, unit: 'degrees C', days: d.length, ...(fallback ? { fallback } : {}) };
+  });
+  // The step on Today and 90 days is sized to each one's own swing. Air temperature swings about half as much again as the sea's.
+  await temperature('OCEAN', 'ocean-daily-ecmwf', 'ocean-ncei', 0.15);
+  await temperature('ATMOS', 'atmos-daily-ecmwf', 'atmos-gistemp', 0.2);
   await tube('CHEMO', async () => { const b = need(span(await load('chemo-monthly')), 12, 'months');
     return { source: 'chemo-daily', transform: 'linear', normal: meanOf(b), step: kept('CHEMO', 'step', 20), cadence: 1, unit: 'ppm', months: b.length }; });
   await tube('CRYO', async () => {

@@ -15,4 +15,6 @@ r=s.parseOni('SEAS  YR   TOTAL   ANOM\n DJF 1950   24.72   -1.53\n NDJ 2025   26
 let threw=false;try{s.parseOwidEnergy('a,b\n1,2')}catch(e){threw=true}ok(threw,'owid complains if the columns are missing');
 ok(s.parseCo2Daily('<html>Not found</html>').length===0&&s.parseGistemp('error').length===0&&s.parseNsidcDaily('').length===0,'junk gives no rows, not a crash');
 ok(s.SOURCES.every(x=>/^https:\/\//.test(x.url())&&typeof x.parse==='function'),'every source has a secure address and a parser');ok(new Set(s.SOURCES.map(x=>x.id)).size===s.SOURCES.length,'source ids are unique');
+{const d=s.SOURCES.find(x=>x.id==='ocean-daily-ecmwf').parse;const r=d('# ERA5 daily\n# units: degC\ndate,sst,clim_91-20,ano_91-20,status\n1979-01-02,20.05,20.4,-0.35,FINAL\n1979-01-01,20.01,20.4,-0.39,FINAL\n2026-11-11,20.902,20.3,0.60,PRELIMINARY\n2026-11-12,,,,\nbad,line\n');
+ ok(eq(r,[{date:'1979-01-01',value:20.01},{date:'1979-01-02',value:20.05},{date:'2026-11-11',value:20.902}]),'daily temperature file: comments, header, blank value and junk skipped; rows in order: '+JSON.stringify(r));ok(d('<html>').length===0&&d('').length===0,'daily temperature junk gives no rows')}
 console.log(`sources: PASS ${pass}  FAIL ${fail}`);process.exit(fail?1:0);
