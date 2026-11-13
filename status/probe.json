@@ -1,5 +1,5 @@
 {
-  "ran": "2026-11-13T13:51:38.929Z",
+  "ran": "2026-11-13T14:53:47.034Z",
   "sources": [
     {
       "id": "litho-usgs",
@@ -7,12 +7,12 @@
       "role": "main",
       "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime=2026-10-14&minmagnitude=5&orderby=time-asc",
       "status": 200,
-      "bytes": 35832,
+      "bytes": 36009,
       "head": "time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type,horizontalError,depthError,magError,magNst,status,locationSource,magSource ",
-      "rows": 190,
+      "rows": 191,
       "first": "2026-10-14",
       "last": "2026-11-13",
-      "lastValue": 1995262314968.8828,
+      "lastValue": 3981071705534.9854,
       "ok": true,
       "seconds": 0.3
     },
@@ -29,7 +29,7 @@
       "last": "2024-09-21",
       "lastValue": 20.93,
       "ok": true,
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "id": "ocean-ncei",
@@ -59,7 +59,7 @@
       "last": "2026-10-15",
       "lastValue": 1.55,
       "ok": true,
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "id": "atmos-ncei",
@@ -74,7 +74,7 @@
       "last": "2026-10-15",
       "lastValue": 1.43,
       "ok": true,
-      "seconds": 0
+      "seconds": 0.1
     },
     {
       "id": "cryo-north",
@@ -89,7 +89,7 @@
       "last": "2026-11-12",
       "lastValue": 8.852,
       "ok": true,
-      "seconds": 0.8
+      "seconds": 0.9
     },
     {
       "id": "cryo-south",
@@ -105,30 +105,6 @@
       "lastValue": 14.986,
       "ok": true,
       "seconds": 0.5
-    },
-    {
-      "id": "cryo-north-v3",
-      "tube": "CRYO",
-      "role": "backup",
-      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/data/N_seaice_extent_daily_v3.0.csv",
-      "status": 404,
-      "bytes": 153,
-      "head": "<html> <head><title>404 Not Found</title></head> <body> <center><h1>404 Not Found</h1></center> <hr><center>nginx/1.23.4</center> </body> </html> ",
-      "ok": false,
-      "error": "The server answered 404.",
-      "seconds": 0.1
-    },
-    {
-      "id": "cryo-south-v3",
-      "tube": "CRYO",
-      "role": "backup",
-      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/south/daily/data/S_seaice_extent_daily_v3.0.csv",
-      "status": 404,
-      "bytes": 153,
-      "head": "<html> <head><title>404 Not Found</title></head> <body> <center><h1>404 Not Found</h1></center> <hr><center>nginx/1.23.4</center> </body> </html> ",
-      "ok": false,
-      "error": "The server answered 404.",
-      "seconds": 0.1
     },
     {
       "id": "chemo-daily",
@@ -173,7 +149,52 @@
       "last": "2024-07-01",
       "lastValue": 176737.094,
       "ok": true,
-      "seconds": 0.1
+      "seconds": 0.9
+    },
+    {
+      "id": "cyclo-nino34",
+      "tube": "CYCLO",
+      "role": "main",
+      "url": "https://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices",
+      "status": 200,
+      "bytes": 39345,
+      "head": "YR MON NINO1+2 ANOM NINO3 ANOM NINO4 ANOM NINO3.4 ANOM 1982 1 24.28 -0.24 25.84 0.17 28.01 -0.21 26.65 0.08 1982 2 25.38",
+      "rows": 538,
+      "first": "1982-01-15",
+      "last": "2026-10-15",
+      "lastValue": 3.25,
+      "ok": true,
+      "seconds": 0.2
+    },
+    {
+      "id": "cyclo-oni",
+      "tube": "CYCLO",
+      "role": "backup",
+      "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+      "status": 200,
+      "bytes": 23050,
+      "head": " SEAS YR TOTAL ANOM DJF 1950 25.01 -1.32 JFM 1950 25.36 -1.20 FMA 1950 25.88 -1.12 MAM 1950 26.24 -1.08 AMJ 1950 26.35 -1.10 MJJ 1950",
+      "rows": 921,
+      "first": "1950-01-15",
+      "last": "2026-09-15",
+      "lastValue": 2.46,
+      "ok": true,
+      "seconds": 0.2
+    },
+    {
+      "id": "palin-owid",
+      "tube": "PALIN",
+      "role": "main",
+      "url": "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv",
+      "status": 200,
+      "bytes": 9229369,
+      "head": "country,year,iso_code,population,gdp,biofuel_cons_change_pct,biofuel_cons_change_twh,biofuel_cons_per_capita,biofuel_consumption,biofuel_elec_per_capita,biofuel",
+      "rows": 41,
+      "first": "1985-07-01",
+      "last": "2025-07-01",
+      "lastValue": 33.76,
+      "ok": true,
+      "seconds": 0
     },
     {
       "id": "solar-silso",
@@ -189,6 +210,21 @@
       "lastValue": 24,
       "ok": true,
       "seconds": 1.7
+    },
+    {
+      "id": "solar-eisn",
+      "tube": "SOLAR",
+      "role": "extra",
+      "url": "https://www.sidc.be/SILSO/DATA/EISN/EISN_current.csv",
+      "status": 200,
+      "bytes": 598,
+      "head": "2026, 11, 01, 2026.834, 33, 4.9, 23, 29, 2026, 11, 02, 2026.837, 49, 7.0, 21, 26, 2026, 11, 03, 2026.840, 45, 7.9, 18, 20, 2026, 11, 04, 2026.842",
+      "rows": 13,
+      "first": "2026-11-01",
+      "last": "2026-11-13",
+      "lastValue": 139,
+      "ok": true,
+      "seconds": 0.6
     }
   ]
 }
