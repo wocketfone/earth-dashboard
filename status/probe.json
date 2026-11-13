@@ -1,5 +1,5 @@
 {
-  "ran": "2026-11-13T14:53:47.034Z",
+  "ran": "2026-11-13T15:42:07.215Z",
   "sources": [
     {
       "id": "litho-usgs",
@@ -7,14 +7,14 @@
       "role": "main",
       "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime=2026-10-14&minmagnitude=5&orderby=time-asc",
       "status": 200,
-      "bytes": 36009,
+      "bytes": 36008,
       "head": "time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type,horizontalError,depthError,magError,magNst,status,locationSource,magSource ",
       "rows": 191,
       "first": "2026-10-14",
       "last": "2026-11-13",
       "lastValue": 3981071705534.9854,
       "ok": true,
-      "seconds": 0.3
+      "seconds": 0.7
     },
     {
       "id": "ocean-oisst",
@@ -29,7 +29,7 @@
       "last": "2024-09-21",
       "lastValue": 20.93,
       "ok": true,
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "id": "ocean-ncei",
@@ -47,6 +47,63 @@
       "seconds": 0.2
     },
     {
+      "id": "ocean-daily-ecmwf",
+      "tube": "OCEAN",
+      "role": "candidate",
+      "url": "https://sites.ecmwf.int/data/climatepulse/data/series/era5_daily_series_sst_60S-60N_ocean.csv",
+      "status": 200,
+      "bytes": 657843,
+      "head": "# Description: This file contains daily mean sea surface temperature (SST) data from # ERA5 averaged over 60°S-60°N from 1979 to 2026 as well as daily temperat",
+      "rows": 17482,
+      "first": "1979-01-01",
+      "last": "2026-11-11",
+      "lastValue": 20.902,
+      "ok": true,
+      "seconds": 1
+    },
+    {
+      "id": "atmos-daily-ecmwf",
+      "tube": "ATMOS",
+      "role": "candidate",
+      "url": "https://sites.ecmwf.int/data/climatepulse/data/series/era5_daily_series_2t_global.csv",
+      "status": 200,
+      "bytes": 1199150,
+      "head": "# Description: This file contains daily global mean near-surface (2m) air temperature # data from ERA5 from 1940 to 2026 as well as daily temperature anomalies",
+      "rows": 31727,
+      "first": "1940-01-01",
+      "last": "2026-11-11",
+      "lastValue": 14.529,
+      "ok": true,
+      "seconds": 0.5
+    },
+    {
+      "id": "ocean-daily-cr",
+      "tube": "OCEAN",
+      "role": "candidate",
+      "url": "https://climatereanalyzer.org/clim/sst_daily/json_2clim/oisst2.1_world2_sst_day.json",
+      "status": 200,
+      "bytes": 126963,
+      "head": "[ {\"data_source\":\"NOAA OISST 2.1\",\"name\":\"1981\",\"data\":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null",
+      "rows": 16493,
+      "first": "1981-09-01",
+      "last": "2026-10-27",
+      "lastValue": 21.012,
+      "ok": true,
+      "seconds": 0.2
+    },
+    {
+      "id": "atmos-daily-cr",
+      "tube": "ATMOS",
+      "role": "candidate",
+      "url": "https://climatereanalyzer.org/clim/t2_daily/json_2clim/era5_world_t2_day.json",
+      "status": 200,
+      "bytes": 5931,
+      "head": "<!DOCTYPE HTML> <html lang=\"en\"> <head> <!-- Google tag (gtag.js) --> <script async src=\"https://www.googletagmanager.com/gtag/js?id=G-898GBP1TPH\"></script> ",
+      "ok": false,
+      "error": "Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+      "seconds": 0.1
+    },
+    {
       "id": "atmos-gistemp",
       "tube": "ATMOS",
       "role": "main",
@@ -59,7 +116,7 @@
       "last": "2026-10-15",
       "lastValue": 1.55,
       "ok": true,
-      "seconds": 0.3
+      "seconds": 0.5
     },
     {
       "id": "atmos-ncei",
@@ -89,7 +146,7 @@
       "last": "2026-11-12",
       "lastValue": 8.852,
       "ok": true,
-      "seconds": 0.9
+      "seconds": 0.6
     },
     {
       "id": "cryo-south",
@@ -104,7 +161,7 @@
       "last": "2026-11-12",
       "lastValue": 14.986,
       "ok": true,
-      "seconds": 0.5
+      "seconds": 0.6
     },
     {
       "id": "chemo-daily",
@@ -149,7 +206,7 @@
       "last": "2024-07-01",
       "lastValue": 176737.094,
       "ok": true,
-      "seconds": 0.9
+      "seconds": 0.8
     },
     {
       "id": "cyclo-nino34",
@@ -209,7 +266,7 @@
       "last": "2026-10-31",
       "lastValue": 24,
       "ok": true,
-      "seconds": 1.7
+      "seconds": 1.3
     },
     {
       "id": "solar-eisn",
@@ -218,13 +275,13 @@
       "url": "https://www.sidc.be/SILSO/DATA/EISN/EISN_current.csv",
       "status": 200,
       "bytes": 598,
-      "head": "2026, 11, 01, 2026.834, 33, 4.9, 23, 29, 2026, 11, 02, 2026.837, 49, 7.0, 21, 26, 2026, 11, 03, 2026.840, 45, 7.9, 18, 20, 2026, 11, 04, 2026.842",
+      "head": "2026, 11, 01, 2026.834, 33, 5.2, 24, 30, 2026, 11, 02, 2026.837, 48, 7.8, 23, 27, 2026, 11, 03, 2026.840, 45, 7.7, 19, 21, 2026, 11, 04, 2026.842",
       "rows": 13,
       "first": "2026-11-01",
       "last": "2026-11-13",
       "lastValue": 139,
       "ok": true,
-      "seconds": 0.6
+      "seconds": 0.7
     }
   ]
 }
