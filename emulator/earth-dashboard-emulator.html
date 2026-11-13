@@ -409,7 +409,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
       // If another data set was chosen while this was on its way, that choice stands.
       if (mine !== ticket) return setFetch('none', 'Not used', 'You picked other data while this was fetching, so the fetched file was set aside.');
       if (r.why === 'slow') return setFetch('bad', 'Bad', `No answer after ${Math.round(waitMs / 1000)} seconds, so the fetch was given up.` + KEEP);
-      if (r.why === 'reach') return setFetch('bad', 'Bad', 'Couldn\'t reach the address. Inside Claude\'s viewer that\'s expected, because pages there aren\'t allowed to call outside addresses. The same emulator at wocketfone.github.io/earth-dashboard can.' + KEEP);
+      if (r.why === 'reach') return setFetch('bad', 'Bad', 'Couldn\'t reach the address. ' + (/github\.io$/.test(location.hostname) ? 'Check the address and the internet connection.' : 'Inside Claude\'s viewer that\'s expected, because pages there aren\'t allowed to call outside addresses. The same emulator at wocketfone.github.io/earth-dashboard can.') + KEEP);
       if (r.why === 'status') return setFetch('bad', 'Bad', `The server answered ${r.status}${r.status === 404 ? ', which means there\'s no file at that address' : ''}.` + KEEP);
       if (r.why === 'checks') return setFetch('bad', 'Bad', 'The file arrived but failed the board\'s checks, so all of it was rejected. ' + r.error + KEEP);
       const same = live && cur.file.seq === r.file.seq && cur.file.made === r.file.made && cur.file.era === r.file.era;
