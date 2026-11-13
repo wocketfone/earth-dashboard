@@ -96,7 +96,8 @@ for (const [label, tube, breakIt] of [['D a source disappears', 'OCEAN', f2 => f
 { const r2 = path.join(tmp, 'i'), f2 = path.join(tmp, 'i-fix'); fs.mkdirSync(r2); fixtures(f2); run('normals.js', r2, f2); run('build.js', r2, f2); ok(col(J(r2, 'public/frame-0.json'), IDX.CYCLO)[0] === '7', 'I CYCLO starts at 7');
   fixtures(f2, { ninoLatest: 0.95 }); run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z' }); ok(col(J(r2, 'public/frame-0.json'), IDX.CYCLO)[0] === '7', 'I 0.95 is just under the line: the tube holds 7');
   run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T14:00:00Z', FRESH: '1' }); ok(col(J(r2, 'public/frame-0.json'), IDX.CYCLO)[0] === '6', 'I a fresh start drops it to 6');
-  fixtures(f2, { ninoLatest: 0.6 }); run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T15:00:00Z' }); ok(col(J(r2, 'public/frame-0.json'), IDX.CYCLO)[0] === '6', 'I 0.6 reads 6'); }
+  fixtures(f2, { ninoLatest: 0.6 }); run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T15:00:00Z' }); ok(col(J(r2, 'public/frame-0.json'), IDX.CYCLO)[0] === '6', 'I 0.6 reads 6');
+  const h = fs.readFileSync(path.join(r2, 'data/year-history.csv'), 'utf8').trim().split('\n'); ok(h.length === 2 && h[1] === '2026-11-13,' + J(r2, 'public/frame-0.json').d[2], 'I history keeps one line for the day, holding the latest Year digits: ' + h.slice(1)); }
 // J: the data goes stale
 { const r2 = path.join(tmp, 'j'), f2 = path.join(tmp, 'j-fix'); fs.mkdirSync(r2); fixtures(f2); run('normals.js', r2, f2); run('build.js', r2, f2);
   const res = run('build.js', r2, f2, { EARTH_NOW: '2027-06-01T12:00:00Z' }), g = J(r2, 'public/frame-0.json');
