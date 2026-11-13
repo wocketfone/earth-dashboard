@@ -1,7 +1,7 @@
 {
  "era": 0,
  "period": "2001-2020",
- "made": "2026-11-13T13:55:21.721Z",
+ "made": "2026-11-13T14:55:24.407Z",
  "tubes": {
   "OCEAN": {
    "source": "ocean-ncei",
@@ -2985,7 +2985,7 @@
    "source": "anth-owid",
    "transform": "linear",
    "normal": 140822,
-   "step": 14082,
+   "step": 21123,
    "cadence": 365,
    "unit": "TWh a year",
    "years": 20
@@ -3014,11 +3014,24 @@
    "unit": "joules",
    "earthquakes": 35659
   },
-  "BIO": {
-   "error": "No machine-readable source chosen yet."
+  "CYCLO": {
+   "source": "cyclo-nino34",
+   "transform": "linear",
+   "normal": 0,
+   "step": 0.5,
+   "wholeSteps": true,
+   "cadence": 30,
+   "unit": "degrees C"
   },
-  "TECH": {
-   "error": "No machine-readable source. Needs a figure entered by hand."
+  "PALIN": {
+   "source": "palin-owid",
+   "transform": "linear",
+   "normal": 20.95,
+   "step": 6,
+   "cadence": 365,
+   "unit": "percent of electricity",
+   "years": 20,
+   "latest": 33.76
   }
  }
 }
