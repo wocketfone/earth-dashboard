@@ -1,0 +1,148 @@
+{
+ "made": "2026-11-13T16:09:39.748Z",
+ "commissioning": {
+  "failed": [],
+  "differs": [],
+  "detail": {}
+ },
+ "reset": {
+  "period": "2016-11-14 to 2026-11-13",
+  "failed": [],
+  "jobExit": 0,
+  "frame0": {
+   "v": 1,
+   "seq": 5,
+   "made": "2026-11-13T16:10:34.972Z",
+   "poll": 3600,
+   "era": 0,
+   "ready": true,
+   "glow": "",
+   "d": [
+    "588379778",
+    "578379775",
+    "467376776",
+    "555555555"
+   ],
+   "slow": [
+    "011001110",
+    "000000110",
+    "000000000",
+    "000000000"
+   ]
+  },
+  "frame1": {
+   "v": 1,
+   "seq": 1,
+   "made": "2026-11-13T16:10:34.972Z",
+   "poll": 3600,
+   "era": 1,
+   "ready": false,
+   "glow": "7A5CFF",
+   "d": [
+    "588469668",
+    "578469665",
+    "566466666",
+    "644645445"
+   ],
+   "slow": [
+    "011001110",
+    "000000110",
+    "000000000",
+    "000000000"
+   ]
+  },
+  "frame0Valid": null,
+  "frame1Valid": null,
+  "tubes": {
+   "LITHO": {
+    "oldNormal": 332050000000000000,
+    "newNormal": 212590000000000000,
+    "step": 0.2253,
+    "stepKept": true,
+    "button4": 6,
+    "onOldScale": "554",
+    "onNewScale": "555"
+   },
+   "OCEAN": {
+    "oldNormal": 0.538,
+    "newNormal": 0.7791,
+    "step": 0.3,
+    "stepKept": true,
+    "button4": 4,
+    "onOldScale": "876",
+    "onNewScale": "876"
+   },
+   "ATMOS": {
+    "oldNormal": 0.727,
+    "newNormal": 1.0322,
+    "step": 0.3,
+    "stepKept": true,
+    "button4": 4,
+    "onOldScale": "887",
+    "onNewScale": "886"
+   },
+   "CRYO": {
+    "oldNormal": 0,
+    "newNormal": 0,
+    "step": 0.75,
+    "stepKept": true,
+    "button4": 6,
+    "onOldScale": "333",
+    "onNewScale": "444"
+   },
+   "CHEMO": {
+    "oldNormal": 390.6305,
+    "newNormal": 415.5268,
+    "step": 20,
+    "stepKept": true,
+    "button4": 4,
+    "onOldScale": "777",
+    "onNewScale": "666"
+   },
+   "CYCLO": {
+    "oldNormal": 0,
+    "newNormal": 0,
+    "step": 0.5,
+    "stepKept": true,
+    "button4": 5,
+    "onOldScale": "996",
+    "onNewScale": "996"
+   },
+   "ANTH": {
+    "oldNormal": 140822,
+    "newNormal": 165650,
+    "step": 21123,
+    "stepKept": true,
+    "button4": 4,
+    "onOldScale": "777",
+    "onNewScale": "666"
+   },
+   "PALIN": {
+    "oldNormal": 20.95,
+    "newNormal": 28.58,
+    "step": 6,
+    "stepKept": true,
+    "button4": 4,
+    "onOldScale": "777",
+    "onNewScale": "666"
+   },
+   "SOLAR": {
+    "oldNormal": 56.9402,
+    "newNormal": 63.0217,
+    "step": 1.5,
+    "stepKept": true,
+    "button4": 5,
+    "onOldScale": "856",
+    "onNewScale": "856"
+   }
+  },
+  "logTail": [
+   "[scale 1] OK   CYCLO 2026-10-15 3.25, 2.87, 0.96667",
+   "[scale 1] OK   ANTH 2024-07-01 176740, 176740, 176740",
+   "[scale 1] OK   PALIN 2025-07-01 33.76, 33.76, 33.76",
+   "[scale 1] OK   SOLAR 2026-11-13 139, 62.122, 85.192",
+   "[scale 1] Published a new frame: {\"v\":1,\"seq\":1,\"made\":\"2026-11-13T16:10:34.972Z\",\"poll\":3600,\"era\":1,\"ready\":false,\"glow\":\"7A5CFF\",\"d\":[\"588469668\",\"578469665\",\"566466666\",\"644645445\"],\"slow\":[\"011001110\",\"000000110\",\"000000000\",\"000000000\"]}",
+   ""
+  ]
+ }
+}
