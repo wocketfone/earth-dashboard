@@ -1,5 +1,5 @@
 {
- "made": "2026-11-13T14:56:37.701Z",
+ "made": "2026-11-13T15:03:20.842Z",
  "tubes": {
   "LITHO": {
    "ok": true,
@@ -23,34 +23,36 @@
    "source": "ocean-ncei",
    "unit": "degrees C",
    "latest": "2026-10-15",
+   "about": "Today and 90 days are degrees above the same months of the last ten years. Year is the level; normal is 0.538.",
    "values": [
-    1.14,
-    1.11,
+    0.389,
+    0.337,
     0.9441666666666668
    ],
    "positions": [
-    3.01,
-    2.86,
-    2.031
+    3.89,
+    3.37,
+    1.354
    ],
-   "digits": "887"
+   "digits": "987"
   },
   "ATMOS": {
    "ok": true,
    "source": "atmos-gistemp",
    "unit": "degrees C",
    "latest": "2026-10-15",
+   "about": "Today and 90 days are degrees above the same months of the last ten years. Year is the level; normal is 0.727.",
    "values": [
-    1.55,
-    1.4533333333333331,
+    0.5050000000000001,
+    0.4403333333333334,
     1.245
    ],
    "positions": [
-    4.115,
-    3.632,
-    2.59
+    5.05,
+    4.403,
+    1.727
    ],
-   "digits": "998"
+   "digits": "997"
   },
   "CRYO": {
    "ok": true,
@@ -144,12 +146,12 @@
    "latest": "2026-11-13",
    "values": [
     139,
-    62.06666666666667,
-    85.17808219178082
+    62.08888888888889,
+    85.18356164383562
    ],
    "positions": [
     2.829,
-    0.222,
+    0.223,
     1.122
    ],
    "digits": "856"
@@ -157,16 +159,16 @@
  },
  "frame": {
   "v": 1,
-  "seq": 2,
-  "made": "2026-11-13T14:56:37.701Z",
+  "seq": 3,
+  "made": "2026-11-13T15:03:20.842Z",
   "poll": 3600,
   "era": 0,
   "ready": false,
   "glow": "",
   "d": [
-   "589379778",
+   "599379778",
    "589379775",
-   "478376776",
+   "477376776",
    "555555555"
   ],
   "slow": [
