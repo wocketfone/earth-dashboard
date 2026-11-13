@@ -190,8 +190,8 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   const MODES = ['Today', '90 days', 'Year', 'Baseline'];
   const LEGEND = [
     ['LITHO', 'a typical day, 90 days, or year of earthquake energy', 'set per button, about energy × 2'],
-    ['OCEAN', '2001–2020 average sea temperature', '0.2 °C'],
-    ['ATMOS', '2001–2020 average air temperature', '0.2 °C'],
+    ['OCEAN', 'Year: 2001–2020 average. Today and 90 days: the last ten years', '0.3 °C on Year; 0.15 °C on the others'],
+    ['ATMOS', 'Year: 2001–2020 average. Today and 90 days: the last ten years', '0.3 °C on Year; 0.15 °C on the others'],
     ['CRYO', 'both poles at their usual ice extent', '0.75 standard deviations'],
     ['CHEMO', '391 ppm CO₂', '20 ppm'],
     ['CYCLO', 'a neutral Pacific', '0.5 °C: 6 weak, 7 moderate, 8 strong, 9 very strong El Niño'],
@@ -208,7 +208,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     demo:  { label: 'Made-up demo data', note: 'These readings are invented to exercise the display.',
              file: file(1, ['688377657', '588276656', '477374657', '555555555']) },
     first: { label: 'Real readings, 13 November 2026', note: 'A copy of the live file from 13 November 2026. All nine tubes have real readings. CYCLO is at 9 because a very strong El Niño is under way.',
-             file: file(2, ['589379778', '589379775', '478376776', '555555555']) },
+             file: file(2, ['588379778', '578379775', '467376776', '555555555']) },
     calm:  { label: 'Made-up: a calm planet', note: 'Invented. Every system sits at its normal.',
              file: file(3, ['555555555', '555555555', '555555555', '555555555']) },
     wild:  { label: 'Made-up: everything off the scale', note: 'Invented. Every tube is pinned at 1 or 9.',

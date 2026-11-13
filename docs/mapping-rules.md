@@ -30,8 +30,8 @@ The first time a tube is read, there's no previous digit, so plain rounding appl
 | Tube | Measures | Scale | Normal (5) | One step | Counts toward a reset |
 |---|---|---|---|---|---|
 | LITHO | Earthquake energy in the window | Curved (each step is a fixed ratio) | The typical window of that length, 2001–2020 | Set from the data | No |
-| OCEAN | Sea surface temperature | Straight | 2001–2020 average | 0.2 °C | Yes |
-| ATMOS | Surface air temperature | Straight | 2001–2020 average | 0.2 °C | Yes |
+| OCEAN | Sea surface temperature | Straight | Two questions; see below | 0.3 °C on Year; 0.15 °C on Today and 90 days | Yes |
+| ATMOS | Surface air temperature | Straight | Two questions; see below | 0.3 °C on Year; 0.15 °C on Today and 90 days | Yes |
 | CRYO | Sea ice, Arctic and Antarctic averaged | Straight | Both poles at their usual extent for the date | 0.75 standard deviations | Yes |
 | CHEMO | Carbon dioxide | Straight | 390.6 ppm | 20 ppm | Yes |
 | CYCLO | El Niño and La Niña index (Niño 3.4) | Straight, whole steps | A neutral Pacific | 0.5 °C | No |
@@ -40,6 +40,13 @@ The first time a tube is read, there's no previous digit, so plain rounding appl
 | SOLAR | Sunspot number | Curved (square root) | 56.9 | 1.5 on the square-root scale | No |
 
 On the SOLAR curve, a spotless sun reads 1, an average sun reads 5, and about 200 spots reads 9. All nine digits can light.
+
+OCEAN and ATMOS ask two questions, because their long climb would otherwise leave them stuck near 9.
+
+- **Year** compares the last twelve months with the 2001–2020 average, at 0.3 °C a step. This is the long story, and it's the only one of the two that counts toward a reset.
+- **Today and 90 days** compare the latest month, or the latest three, with the same months of the last ten years, at 0.15 °C a step. On these buttons, 5 means typical for the recent decade. They rise in an El Niño and fall in a La Niña.
+
+Because the planet is warming, an ordinary year sits a little above the average of the ten before it. So on Today and 90 days these two tubes will tend to rest around 6, not 5.
 
 CYCLO changes digit when the index crosses a whole step, not half of one. That lines its digits up with the official strengths: 5 is neutral, 6 is a weak El Niño (0.5 °C), 7 is moderate (1.0), 8 is strong (1.5), and 9 is very strong (2.0 or more). La Niña mirrors that on the left.
 
@@ -78,6 +85,5 @@ The mapping code has about 1,260 checks. They cover rounding at every boundary, 
 
 ## What isn't settled?
 
-- OCEAN and ATMOS are still at 0.2 °C a step. With real data, ATMOS reads 9 on two buttons. A wider step, or a livelier comparison for Today and 90 days, is under discussion.
 - OCEAN uses a monthly source. A daily one would be better.
 - The fetcher records the daily history a reset needs, but it can't build the second file yet.
