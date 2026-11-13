@@ -4,11 +4,16 @@
 
 const HEADERS = { 'User-Agent': 'earth-dashboard (https://github.com/wocketfone/earth-dashboard)' };
 
+// Fetches an address once per run. Two tubes share one large file, so the second asker gets the saved copy.
+const fetched = new Map();
 async function get(url, timeoutMs = 90000) {
+  if (fetched.has(url)) return fetched.get(url);
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {
     const res = await fetch(url, { headers: HEADERS, signal: ctl.signal, redirect: 'follow' });
-    return { status: res.status, ok: res.ok, text: await res.text() };
+    const out = { status: res.status, ok: res.ok, text: await res.text() };
+    if (out.ok) fetched.set(url, out);
+    return out;
   } finally { clearTimeout(timer); }
 }
 
@@ -88,13 +93,28 @@ function parseEisn(text) {
     .map(c => ({ date: iso(+c[0], +c[1], +c[2]), value: num(c[4]) })).filter(r => r.value !== null && r.value >= 0));
 }
 
-// Our World in Data energy file. We want the World rows and the primary_energy_consumption column, in TWh a year.
-function parseOwidEnergy(text) {
+// Our World in Data energy file. We want the World rows and one named column.
+function parseOwidColumn(text, column) {
   const all = text.split(/\r?\n/), head = all[0].split(',');
-  const iCountry = head.indexOf('country'), iYear = head.indexOf('year'), iVal = head.indexOf('primary_energy_consumption');
-  if (iCountry < 0 || iYear < 0 || iVal < 0) throw new Error('Expected columns not found in the energy file.');
+  const iCountry = head.indexOf('country'), iYear = head.indexOf('year'), iVal = head.indexOf(column);
+  if (iCountry < 0 || iYear < 0 || iVal < 0) throw new Error(`Column "${column}" not found in the energy file.`);
   return sorted(all.filter(l => l.startsWith('World,')).map(l => l.split(','))
     .map(c => ({ date: iso(+c[iYear], 7, 1), value: num(c[iVal] === '' ? 'x' : c[iVal]) })));
+}
+const parseOwidEnergy = text => parseOwidColumn(text, 'primary_energy_consumption');            // TWh a year
+const parseOwidRenewShare = text => parseOwidColumn(text, 'renewables_share_elec');             // percent of electricity
+
+// NOAA Climate Prediction Center, monthly sea surface temperature indices.
+// Columns: year, month, then a temperature and an anomaly for each of four Pacific regions. The last pair is Nino 3.4.
+function parseNino34(text) {
+  return sorted(lines(text).map(l => l.split(/\s+/)).filter(c => c.length >= 10 && num(c[0]) > 1900 && num(c[1]) >= 1 && num(c[1]) <= 12)
+    .map(c => ({ date: iso(+c[0], +c[1], 15), value: num(c[9]) })));
+}
+// NOAA Oceanic Nino Index: three-month running means. Columns: season, year, total, anomaly.
+const SEASONS = ['DJF', 'JFM', 'FMA', 'MAM', 'AMJ', 'MJJ', 'JJA', 'JAS', 'ASO', 'SON', 'OND', 'NDJ'];
+function parseOni(text) {
+  return sorted(lines(text).map(l => l.split(/\s+/)).filter(c => c.length >= 4 && SEASONS.includes(c[0]) && num(c[1]) > 1900)
+    .map(c => ({ date: iso(+c[1], SEASONS.indexOf(c[0]) + 1, 15), value: num(c[3]) })));
 }
 
 const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
@@ -121,10 +141,16 @@ const SOURCES = [
     url: () => 'https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_gl.csv' },
   { id: 'anth-owid', tube: 'ANTH', role: 'main', parse: parseOwidEnergy,
     url: () => 'https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv' },
+  { id: 'cyclo-nino34', tube: 'CYCLO', role: 'main', parse: parseNino34,
+    url: () => 'https://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices' },
+  { id: 'cyclo-oni', tube: 'CYCLO', role: 'backup', parse: parseOni,
+    url: () => 'https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt' },
+  { id: 'palin-owid', tube: 'PALIN', role: 'main', parse: parseOwidRenewShare,
+    url: () => 'https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv' },
   { id: 'solar-silso', tube: 'SOLAR', role: 'main', parse: parseSilsoDaily,
     url: () => 'https://www.sidc.be/SILSO/INFO/sndtotcsv.php' },
   { id: 'solar-eisn', tube: 'SOLAR', role: 'extra', parse: parseEisn,
     url: () => 'https://www.sidc.be/SILSO/DATA/EISN/EISN_current.csv' },
 ];
 
-module.exports = { get, SOURCES, parseCo2Daily, parseCo2Monthly, parseGistemp, parseSilsoDaily, parseNsidcDaily, parseOisstJson, parseNceiMonthly, parseUsgsCsv, parseOwidEnergy, parseEisn };
+module.exports = { get, SOURCES, parseCo2Daily, parseCo2Monthly, parseGistemp, parseSilsoDaily, parseNsidcDaily, parseOisstJson, parseNceiMonthly, parseUsgsCsv, parseOwidEnergy, parseOwidRenewShare, parseOwidColumn, parseNino34, parseOni, parseEisn };
