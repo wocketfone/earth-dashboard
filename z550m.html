@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0}</style></head><body>
+<title>Z550M Tube Emulator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a test bench. Tube on the left, driver controls on the right, scope trace full width below. */
+:root{
+  --bg:#eceee9; --panel:#f8f9f5; --line:#c9cec4; --fg:#1d231f; --muted:#5a645c;
+  --accent:#0f6b5c; --accent-fg:#ffffff; --trace:#0f6b5c; --glow:#d9481c; --grid:#d8dcd3;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151916; --panel:#1d221e; --line:#343c35; --fg:#e6eae3; --muted:#9aa69c;
+  --accent:#4fc3ae; --accent-fg:#0d1512; --trace:#4fc3ae; --glow:#ff6a33; --grid:#2a312b; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#151916; --panel:#1d221e; --line:#343c35; --fg:#e6eae3; --muted:#9aa69c;
+  --accent:#4fc3ae; --accent-fg:#0d1512; --trace:#4fc3ae; --glow:#ff6a33; --grid:#2a312b; color-scheme:dark }
+
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.5;
+  padding-block:24px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:24px;font-weight:600;margin:0;text-wrap:balance}
+h2{font-size:13px;font-weight:600;margin:0;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+p{margin:0;max-width:65ch}
+.lede{color:var(--muted)}
+.bench{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.bench{grid-template-columns:minmax(0,1fr)}}
+.tubebox{display:flex;flex-direction:column;gap:10px}
+#tube{width:100%;aspect-ratio:1;max-width:100%;border-radius:12px;display:block;background:#0b0908}
+.status{font-family:var(--mono);font-size:13px;min-height:3em;color:var(--fg)}
+.controls{display:flex;flex-direction:column;gap:18px;min-width:0}
+.group{display:flex;flex-direction:column;gap:8px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.digits button{font-family:var(--mono);min-width:38px}
+.go{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:500}
+label{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px}
+label b{font-weight:500;color:var(--fg);font-family:var(--mono);font-variant-numeric:tabular-nums}
+input[type=range]{accent-color:var(--accent);flex:1;min-width:120px}
+input[type=checkbox]{accent-color:var(--accent)}
+.scopebox{display:flex;flex-direction:column;gap:8px}
+#scope{width:100%;height:340px;display:block;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.notes ul{margin:6px 0 0;padding-left:18px;color:var(--muted)}
+.notes li{margin-bottom:4px}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Z550M Tube Emulator</h1>
+    <p class="lede">One Pixie tube, modelled at its electrodes. Prime a starter and the tube strikes on that digit at the next supply cycle.</p>
+  </header>
+
+  <div class="bench">
+    <div class="tubebox">
+      <canvas id="tube" aria-label="Tube face"></canvas>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+
+    <div class="controls">
+      <div class="group">
+        <h2>Which starter is primed?</h2>
+        <div class="row digits" id="digits"></div>
+      </div>
+
+      <div class="group">
+        <h2>Cold start</h2>
+        <div class="row">
+          <button class="go" id="cold">Run the sweep</button>
+          <label for="target">then settle on
+            <select id="target"></select>
+          </label>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Anode supply</h2>
+        <label for="peak">Peak <b id="peakv">125 V</b>
+          <input type="range" id="peak" min="90" max="180" value="125">
+        </label>
+        <div class="row">
+          <label for="freq">Mains
+            <select id="freq"><option value="60">60 Hz</option><option value="50">50 Hz</option></select>
+          </label>
+          <label for="rect">Rectifier
+            <select id="rect"><option value="half">Half-wave</option><option value="full">Full-wave</option></select>
+          </label>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Time</h2>
+        <div class="row" id="speeds">
+          <button data-s="1" aria-pressed="true">Real time</button>
+          <button data-s="0.1" aria-pressed="false">10× slower</button>
+          <button data-s="0.01" aria-pressed="false">100× slower</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Faults</h2>
+        <div class="row">
+          <label for="dead">Dead digit
+            <select id="dead"></select>
+          </label>
+          <label for="two"><input type="checkbox" id="two"> Prime two starters at once</label>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>How is the tube mounted?</h2>
+        <div class="row">
+          <label for="zero">Rotate so that
+            <select id="zero"><option value="-90">0 is at the top</option><option value="90">5 is at the top</option></select>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scopebox">
+    <h2>What the driver board has to produce</h2>
+    <canvas id="scope" aria-label="Scope trace of anode voltage and starter lines"></canvas>
+  </div>
+
+  <div class="notes">
+    <div>
+      <h2>From the published description</h2>
+      <ul>
+        <li>Ten glow cells, with digits cut out of a silver plate.</li>
+        <li>Digits run clockwise, with 0 opposite 5. That's from photos of a 1962 tube.</li>
+        <li>Digits are about 3 mm high. They're drawn to scale here, on a 30 mm face.</li>
+        <li>The supply is unsmoothed and rectified, so the glow dies and re-strikes every cycle.</li>
+        <li>Strike needs about 105 V with a starter primed, and about 135 V without.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Assumed until we measure</h2>
+      <ul>
+        <li>The glow holds until the supply falls below 85 V.</li>
+        <li>The face is 30 mm across.</li>
+        <li>Two primed starters share the strikes at random.</li>
+        <li>A supply peak above 135 V with no starter strikes a random cell.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---------- Tube model ----------
+  const P = { freq: 60, peak: 125, rect: 'half', vPrimed: 105, vBare: 135, vHold: 85 };
+  const DT = 1e-4;                       // simulation step, seconds
+  const tube = { cell: -1, glow: new Float32Array(10), dead: -1 };
+  const drv = { sel: 5, two: false };    // the driver: which starter is primed
+  let speed = 1, t = 0, n = 0, budget = 0;
+  let queue = [];                        // scheduled driver changes: {at, sel}
+
+  const RING = 4096;
+  const bufV = new Float32Array(RING), bufC = new Int8Array(RING), bufM = new Uint16Array(RING);
+
+  const mask = () => drv.sel < 0 ? 0 : (1 << drv.sel) | (drv.two ? 1 << ((drv.sel + 1) % 10) : 0);
+  function anodeV(time) {
+    const s = Math.sin(2 * Math.PI * P.freq * time);
+    return P.peak * (P.rect === 'half' ? Math.max(0, s) : Math.abs(s));
+  }
+  function step() {
+    while (queue.length && queue[0].at <= t) drv.sel = queue.shift().sel;
+    const va = anodeV(t), m = mask();
+    if (tube.cell !== -1) {                       // glowing, or misfired this cycle
+      if (va < P.vHold) tube.cell = -1;
+    } else if (m && va >= P.vPrimed) {            // primed strike
+      const bits = []; for (let i = 0; i < 10; i++) if (m >> i & 1) bits.push(i);
+      const pick = bits[Math.floor(Math.random() * bits.length)];
+      tube.cell = pick === tube.dead ? -2 : pick;
+    } else if (!m && va >= P.vBare) {             // unprimed breakdown
+      const pick = Math.floor(Math.random() * 10);
+      tube.cell = pick === tube.dead ? -2 : pick;
+    }
+    const k = 1 - Math.exp(-DT / (0.035 * speed)); // the eye averages over about 35 ms of real time
+    for (let i = 0; i < 10; i++) tube.glow[i] += ((tube.cell === i ? 1 : 0) - tube.glow[i]) * k;
+    const j = n & (RING - 1); bufV[j] = va; bufC[j] = tube.cell; bufM[j] = m;
+    t += DT; n++;
+  }
+
+  // ---------- Controls ----------
+  const $ = id => document.getElementById(id);
+  const digitsEl = $('digits');
+  for (let i = 0; i <= 10; i++) {
+    const b = document.createElement('button');
+    b.textContent = i < 10 ? i : 'Blank'; b.dataset.d = i < 10 ? i : -1;
+    b.onclick = () => { queue = []; drv.sel = +b.dataset.d; };
+    digitsEl.appendChild(b);
+  }
+  for (let i = 1; i <= 9; i++) $('target').add(new Option(i, i, i === 8, i === 8));
+  $('dead').add(new Option('none', -1));
+  for (let i = 0; i < 10; i++) $('dead').add(new Option(i, i));
+  $('peak').oninput = e => { P.peak = +e.target.value; $('peakv').textContent = P.peak + ' V'; };
+  $('freq').onchange = e => P.freq = +e.target.value;
+  $('rect').onchange = e => P.rect = e.target.value;
+  $('dead').onchange = e => tube.dead = +e.target.value;
+  $('two').onchange = e => drv.two = e.target.checked;
+  let zeroDeg = -90, dir = 1;
+  $('zero').onchange = e => zeroDeg = +e.target.value;
+  function setSpeed(s) {
+    speed = s;
+    document.querySelectorAll('#speeds button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.s === s));
+  }
+  document.querySelectorAll('#speeds button').forEach(b => b.onclick = () => setSpeed(+b.dataset.s));
+
+  // Cold start: sweep 0 to 9, fall back to 5, idle, then walk one digit at a time to the target.
+  $('cold').onclick = () => {
+    setSpeed(1);
+    const target = +$('target').value, q = []; let at = t;
+    for (let d = 0; d <= 9; d++) { q.push({ at, sel: d }); at += 0.15; }
+    for (let d = 8; d >= 5; d--) { q.push({ at, sel: d }); at += 0.15; }
+    at += 1.5;
+    for (let d = 5; d !== target;) { d += Math.sign(target - d); q.push({ at, sel: d }); at += 0.5; }
+    queue = q;
+  };
+
+  // ---------- Drawing ----------
+  const tubeC = $('tube'), scopeC = $('scope');
+  const tctx = tubeC.getContext('2d'), sctx = scopeC.getContext('2d');
+  function fit(c) {
+    const dpr = window.devicePixelRatio || 1, w = Math.round(c.clientWidth * dpr), h = Math.round(c.clientHeight * dpr);
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    return dpr;
+  }
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  function drawTube() {
+    fit(tubeC);
+    const W = tubeC.width, cx = W / 2, cy = W / 2, R = W * 0.44, c = tctx;
+    c.clearRect(0, 0, W, W);
+    let g = c.createRadialGradient(cx, cy, R * 0.2, cx, cy, R * 1.08);
+    g.addColorStop(0, '#231c19'); g.addColorStop(1, '#0d0a09');
+    c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 1.08, 0, 7); c.fill();
+    c.strokeStyle = '#4a433f'; c.lineWidth = W * 0.006; c.stroke();
+    // silver anode plate with the digits cut out, as on the real tube
+    g = c.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
+    g.addColorStop(0, '#a9a9a2'); g.addColorStop(1, '#6d6d67');
+    c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 0.97, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#3a3a36'; c.lineWidth = W * 0.003;
+    for (let i = 0; i < 10; i++) {               // divider between each pair of digits
+      const a = (zeroDeg + dir * (i + 0.5) * 36) * Math.PI / 180;
+      c.beginPath(); c.moveTo(cx + Math.cos(a) * R * 0.56, cy + Math.sin(a) * R * 0.56);
+      c.lineTo(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95); c.stroke();
+    }
+    g = c.createRadialGradient(cx, cy, 0, cx, cy, R * 0.3);
+    g.addColorStop(0, '#c9c9c2'); g.addColorStop(1, '#8c8c86');
+    c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 0.26, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#55554f'; c.beginPath(); c.arc(cx, cy, R * 0.07, 0, Math.PI * 2); c.fill();
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = `600 ${R * 0.2}px "IBM Plex Sans", system-ui, sans-serif`;
+    for (let i = 0; i < 10; i++) {
+      const a = (zeroDeg + dir * i * 36) * Math.PI / 180;
+      const x = cx + Math.cos(a) * R * 0.74, y = cy + Math.sin(a) * R * 0.74;
+      const b = Math.min(1, tube.glow[i] * 3.2);
+      c.shadowBlur = 0; c.fillStyle = '#26221f'; c.fillText(i, x, y);
+      if (b > 0.01) {
+        const halo = c.createRadialGradient(x, y, 0, x, y, R * 0.3);
+        halo.addColorStop(0, `rgba(255,96,40,${0.45 * b})`); halo.addColorStop(1, 'rgba(255,96,40,0)');
+        c.fillStyle = halo; c.beginPath(); c.arc(x, y, R * 0.3, 0, 7); c.fill();
+        c.shadowColor = `rgba(255,90,30,${b})`; c.shadowBlur = R * 0.14 * b;
+        c.fillStyle = `rgba(255,${Math.round(130 + 70 * b)},${Math.round(70 * b)},${b})`;
+        c.fillText(i, x, y); c.fillText(i, x, y);
+        c.shadowBlur = 0;
+      }
+    }
+  }
+
+  function drawScope() {
+    const dpr = fit(scopeC), c = sctx, W = scopeC.width, H = scopeC.height;
+    const fg = css('--fg'), muted = css('--muted'), grid = css('--grid'), trace = css('--trace'), glow = css('--glow');
+    c.clearRect(0, 0, W, H);
+    const padL = 44 * dpr, padR = 92 * dpr, top = 14 * dpr, vH = H * 0.46, x0 = padL, x1 = W - padR;
+    const cycles = 3, span = cycles / P.freq, T0 = (Math.floor(t * P.freq) - (cycles - 1)) / P.freq;
+    const nStart = Math.max(0, Math.round(T0 / DT), n - RING + 1);
+    const X = k => x0 + ((k * DT - T0) / span) * (x1 - x0);
+    const Y = v => top + vH - (v / 190) * vH;
+    c.font = `${11 * dpr}px "IBM Plex Mono", monospace`; c.textBaseline = 'middle';
+    // thresholds
+    c.setLineDash([4 * dpr, 4 * dpr]); c.lineWidth = dpr;
+    for (const [v, label] of [[P.vBare, 'bare 135 V'], [P.vPrimed, 'primed 105 V'], [P.vHold, 'hold 85 V']]) {
+      c.strokeStyle = grid; c.beginPath(); c.moveTo(x0, Y(v)); c.lineTo(x1, Y(v)); c.stroke();
+      c.fillStyle = muted; c.textAlign = 'left'; c.fillText(label, x1 + 6 * dpr, Y(v));
+    }
+    c.setLineDash([]);
+    c.strokeStyle = grid; c.beginPath(); c.moveTo(x0, Y(0)); c.lineTo(x1, Y(0)); c.stroke();
+    c.fillStyle = muted; c.textAlign = 'right'; c.fillText('anode', x0 - 6 * dpr, Y(95));
+    // conduction fill
+    c.fillStyle = glow; c.globalAlpha = 0.28;
+    for (let k = nStart; k < n; k++) {
+      const j = k & (RING - 1);
+      if (bufC[j] >= 0) c.fillRect(X(k), Y(bufV[j]), Math.max(1, X(k + 1) - X(k)), Y(0) - Y(bufV[j]));
+    }
+    c.globalAlpha = 1;
+    // anode trace
+    c.strokeStyle = trace; c.lineWidth = 1.6 * dpr; c.beginPath();
+    for (let k = nStart; k < n; k++) { const j = k & (RING - 1); k === nStart ? c.moveTo(X(k), Y(bufV[j])) : c.lineTo(X(k), Y(bufV[j])); }
+    c.stroke();
+    // starter lines
+    const rTop = top + vH + 18 * dpr, rH = (H - rTop - 6 * dpr) / 10;
+    for (let i = 0; i < 10; i++) {
+      const yLo = rTop + rH * i + rH * 0.8, yHi = rTop + rH * i + rH * 0.2;
+      c.fillStyle = muted; c.textAlign = 'right'; c.fillText('S' + i, x0 - 6 * dpr, (yLo + yHi) / 2);
+      c.strokeStyle = grid; c.lineWidth = dpr; c.beginPath(); c.moveTo(x0, yLo); c.lineTo(x1, yLo); c.stroke();
+      c.strokeStyle = fg; c.lineWidth = 1.4 * dpr; c.beginPath();
+      let prev = null;
+      for (let k = nStart; k < n; k++) {
+        const j = k & (RING - 1), hi = bufM[j] >> i & 1, y = hi ? yHi : yLo;
+        if (prev === null) c.moveTo(X(k), y); else { if (hi !== prev) c.lineTo(X(k), prev ? yHi : yLo); c.lineTo(X(k), y); }
+        prev = hi;
+      }
+      c.stroke();
+      c.fillStyle = trace; c.globalAlpha = 0.3;
+      for (let k = nStart; k < n; k++) { if (bufM[k & (RING - 1)] >> i & 1) c.fillRect(X(k), yHi, Math.max(1, X(k + 1) - X(k)), yLo - yHi); }
+      c.globalAlpha = 1;
+      // mark the cell that is glowing
+      c.fillStyle = glow;
+      for (let k = nStart; k < n; k++) { const j = k & (RING - 1); if (bufC[j] === i) c.fillRect(X(k), yLo + 1 * dpr, Math.max(1, X(k + 1) - X(k)), 2.5 * dpr); }
+    }
+    c.fillStyle = muted; c.textAlign = 'left'; c.fillText('glow', x1 + 6 * dpr, rTop + rH * 0.5 + 12 * dpr);
+    c.fillStyle = glow; c.fillRect(x1 + 6 * dpr, rTop + rH * 0.5 - 2 * dpr, 22 * dpr, 3 * dpr);
+  }
+
+  function status() {
+    const per = Math.round(1 / P.freq / DT); let on = 0, cells = new Set(), miss = false;
+    for (let k = Math.max(0, n - per); k < n; k++) { const cc = bufC[k & (RING - 1)]; if (cc >= 0) { on++; cells.add(cc); } if (cc === -2) miss = true; }
+    const m = mask(), pct = Math.round(100 * on / per), strikes = P.freq * (P.rect === 'full' ? 2 : 1);
+    let s;
+    if (miss && !on) s = `Dark. Starter ${drv.sel} is primed, but that cell is dead.`;
+    else if (!m && on) s = `Random breakdown. No starter is primed, and the supply peak is above 135 V.`;
+    else if (!on) s = m ? `Dark. The supply peak never reaches the 105 V strike level.` : `Dark. No starter is primed, and the supply stays below 135 V.`;
+    else if (drv.two) s = `Two starters primed. The strike lands on either digit.`;
+    else s = `Showing ${[...cells].join(', ')}. ${strikes} strikes a second; glow on for ${pct}% of each cycle.`;
+    $('status').textContent = s;
+    document.querySelectorAll('#digits button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.d === drv.sel));
+  }
+
+  let last = performance.now(), frame = 0;
+  function loop(now) {
+    const real = Math.min(0.1, (now - last) / 1000); last = now;
+    if (!manual) {
+      budget += real * speed / DT;
+      const steps = Math.floor(budget); budget -= steps;
+      for (let i = 0; i < steps; i++) step();
+    }
+    drawTube(); drawScope();
+    if (frame++ % 10 === 0) status();
+    requestAnimationFrame(loop);
+  }
+  // Pre-run a moment of simulated time so the first frame already shows a lit tube and a full trace.
+  for (let i = 0; i < 3000; i++) step();
+  status();
+  requestAnimationFrame(loop);
+  // Test hook: advance(seconds) steps the model deterministically instead of following the clock.
+  let manual = false;
+  window.__z = {
+    P, tube, drv, DT,
+    // Runs the model for a stretch and reports what happened in it.
+    advance(sec) {
+      manual = true; const steps = Math.round(sec / DT), on = new Array(10).fill(0), strikes = new Array(10).fill(0);
+      let misfires = 0, direct = 0, prev = tube.cell;
+      for (let i = 0; i < steps; i++) {
+        step(); const c = tube.cell;
+        if (c >= 0) { on[c]++; if (prev < 0) strikes[c]++; else if (prev !== c) direct++; }
+        if (c === -2 && prev !== -2) misfires++;
+        prev = c;
+      }
+      status();
+      return { steps, on, strikes, misfires, direct, sel: drv.sel, cell: tube.cell, glow: [...tube.glow], t };
+    },
+  };
+})();
+</script>
+
+</body></html>

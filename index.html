@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0}</style></head><body>
+<title>Earth Dashboard Emulator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: the instrument panel on the left (always dark, it is the object), bench controls and the legend on the right. */
+:root{
+  --bg:#eceee9; --panel:#f8f9f5; --line:#c9cec4; --fg:#1d231f; --muted:#5a645c;
+  --accent:#0f6b5c; --accent-fg:#ffffff;
+  --lamp-off:#3a2c24; --lamp-on:#ff8a3c;
+  --inst:#151311; --inst-line:#3a342e; --inst-fg:#d9d2c4; --cap:#efe6c8; --cap-fg:#2a2520; --stripe:#a8322a;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151916; --panel:#1d221e; --line:#343c35; --fg:#e6eae3; --muted:#9aa69c;
+  --accent:#4fc3ae; --accent-fg:#0d1512; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#151916; --panel:#1d221e; --line:#343c35; --fg:#e6eae3; --muted:#9aa69c;
+  --accent:#4fc3ae; --accent-fg:#0d1512; color-scheme:dark }
+
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.5;
+  padding-block:24px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:24px;font-weight:600;margin:0;text-wrap:balance}
+h2{font-size:13px;font-weight:600;margin:0;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+p{margin:0;max-width:65ch}
+.lede{color:var(--muted)}
+.bench{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:860px){.bench{grid-template-columns:minmax(0,1fr)}}
+
+.inst{background:var(--inst);border:1px solid var(--inst-line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:18px;color:var(--inst-fg)}
+.clusters{display:flex;flex-direction:column;gap:10px}
+.cluster{border:1px solid var(--inst-line);border-radius:8px;padding:10px 10px 12px;display:flex;flex-direction:column;gap:8px}
+.clhead{display:flex;gap:10px;align-items:baseline;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--cap)}
+.clhead b{font-weight:500}
+.clhead span{letter-spacing:.04em;text-transform:none;color:var(--inst-fg);opacity:.6}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cell{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.cell canvas{width:100%;aspect-ratio:1;max-width:100%;display:block}
+.cell span{font-family:var(--mono);font-size:12px;letter-spacing:.12em;display:flex;align-items:center;gap:6px}
+.lamp{width:7px;height:7px;border-radius:50%;background:var(--lamp-off);flex:none}
+.lamp.on{background:var(--lamp-on);box-shadow:0 0 7px var(--lamp-on)}
+.lamp.big{width:11px;height:11px;display:inline-block}
+.lamp.good{background:#2fbf71;box-shadow:0 0 7px #2fbf71}
+.lamp.bad{background:#e5484d;box-shadow:0 0 7px #e5484d}
+.lamp.old{background:#f5a623;box-shadow:0 0 7px #f5a623}
+.lamp.busy{background:var(--lamp-on);animation:pulse .7s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:.25}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.lamp.busy{animation:none}}
+.fetchstate{display:inline-flex;align-items:center;gap:8px}
+input[type=url]{font-family:var(--mono);font-size:12.5px;width:100%;box-sizing:border-box;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:7px 8px}
+input[type=url]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.side button:disabled{opacity:.5;cursor:not-allowed}
+.keys{display:flex;justify-content:center;gap:0;background:var(--stripe);border-radius:999px;padding:6px 10px;align-self:center;flex-wrap:wrap}
+.keys button{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:4px 10px;cursor:pointer;color:var(--inst-fg);font:inherit}
+.keys .cap{width:46px;height:46px;border-radius:50%;background:var(--cap);color:var(--cap-fg);display:grid;place-items:center;font-family:var(--mono);font-weight:500;font-size:18px;box-shadow:0 3px 0 rgba(0,0,0,.45);transition:transform .08s, box-shadow .08s}
+.keys button[aria-pressed="true"] .cap{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.45)}
+.keys small{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--cap)}
+.keys button:focus-visible .cap{outline:2px solid var(--cap);outline-offset:3px}
+.state{font-family:var(--mono);font-size:13px;text-align:center;min-height:1.5em}
+.doom{border-top:1px solid var(--inst-line);padding-top:14px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--inst-fg)}
+.doom .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.doom label{color:var(--inst-fg)}
+.doom p{margin:0 auto;text-align:center;min-height:1.5em}
+.doom button{font:inherit;background:var(--stripe);color:var(--cap);border:1px solid var(--stripe);border-radius:6px;padding:6px 16px;cursor:pointer}
+.doom button.ghost{background:none;color:var(--inst-fg);border-color:var(--inst-line)}
+.doom button:focus-visible{outline:2px solid var(--cap);outline-offset:2px}
+
+.side{display:flex;flex-direction:column;gap:20px;min-width:0}
+.group{display:flex;flex-direction:column;gap:8px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select{max-width:100%}
+.side button,select{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+.side button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.side .go{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:500}
+label{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px}
+input[type=checkbox]{accent-color:var(--accent)}
+input[type=range]{accent-color:var(--accent);flex:1;min-width:120px}
+label.wide{flex-basis:100%;flex-wrap:wrap;min-width:0}
+label.wide input[type=range]{min-width:0;flex:1 1 120px}
+textarea{font-family:var(--mono);font-size:12.5px;line-height:1.5;width:100%;box-sizing:border-box;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label b{font-weight:500;color:var(--fg);font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.note{color:var(--muted);font-size:14px}
+.tablebox{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:500;color:var(--muted)}
+td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
+.rules{margin:0;padding-left:18px;color:var(--muted)}
+.rules li{margin-bottom:4px}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Earth Dashboard Emulator</h1>
+    <p class="lede">Nine Z550M tubes and four buttons. Straight up is normal. A glow leaning right means more than normal; leaning left means less.</p>
+  </header>
+
+  <div class="bench">
+    <div class="inst">
+      <div class="clusters" id="grid"></div>
+      <div class="keys" id="keys"></div>
+      <div class="state" id="state" aria-live="polite"></div>
+      <div class="doom">
+        <div class="row"><i class="lamp big" id="readylamp"></i><strong>Doomsday button</strong><span id="readytxt"></span></div>
+        <div class="row">
+          <label for="cover"><input type="checkbox" id="cover"> Lift the cover</label>
+          <button id="reset">Press</button>
+          <button id="jump" class="ghost">Jump ahead to reset day</button>
+        </div>
+        <p id="resetmsg" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="group">
+        <h2>Presence</h2>
+        <div class="row">
+          <button class="go" id="wake">Walk up to it</button>
+          <button id="sleep">Walk away</button>
+          <button id="lamp">Run the lamp test</button>
+        </div>
+        <p class="note">Waking runs the cold start with a five-second idle. A button press uses a two-second idle. Holding any of the four buttons for three seconds also runs the lamp test.</p>
+      </div>
+
+      <div class="group">
+        <h2>Live data</h2>
+        <div class="row">
+          <button class="go" id="fetchnow">Fetch live data now</button>
+          <span class="fetchstate" role="status"><i class="lamp big" id="fetchlamp"></i><strong id="fetchword">Not tried yet</strong></span>
+        </div>
+        <p class="note" id="fetchmsg">Gets the file the board will get, from the address below, and runs the board's checks on it.</p>
+        <label for="fetchurl">Address the board fetches from</label>
+        <input id="fetchurl" type="url" spellcheck="false" autocomplete="off">
+      </div>
+
+      <div class="group">
+        <h2>What data is it showing?</h2>
+        <div class="row"><select id="scen" aria-label="Data scenario"></select></div>
+        <p class="note" id="scennote"></p>
+        <label for="framebox">The frame file the board would fetch</label>
+        <textarea id="framebox" rows="8" spellcheck="false"></textarea>
+        <div class="row"><button id="sendframe">Send this frame</button></div>
+        <p class="note" id="framemsg" aria-live="polite"></p>
+      </div>
+
+      <div class="group">
+        <h2>Options</h2>
+        <div class="row">
+          <label for="ripple"><input type="checkbox" id="ripple"> Ripple the sweep down the rows</label>
+          <label for="rawglow"><input type="checkbox" id="rawglow"> Show the raw 60 Hz pulse (shimmers on a screen)</label>
+          <label for="pace" class="wide">Pace <b id="pacev">220 ms a digit</b>
+            <input type="range" id="pace" min="50" max="200" value="100"></label>
+        </div>
+        <div class="row">
+          <label for="mount">Tubes mounted with
+            <select id="mount"><option value="90">5 at the top</option><option value="-90">0 at the top</option></select>
+          </label>
+        </div>
+        <div class="row">
+          <label for="fdigit">Pretend digit
+            <select id="fdigit"></select></label>
+          <label for="ftube">is dead on
+            <select id="ftube"></select></label>
+          <label for="sense" class="wide"><input type="checkbox" id="sense" checked> The board can sense a failed strike</label>
+          <p class="note" id="sensed" style="flex-basis:100%"></p>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>What does one step mean?</h2>
+        <div class="tablebox">
+          <table>
+            <thead><tr><th>Tube</th><th>Normal (5)</th><th>One step</th></tr></thead>
+            <tbody id="legend"></tbody>
+          </table>
+        </div>
+        <p class="note">Normal is the 2001–2020 value unless stated. These are the numbers the live fetcher uses.</p>
+      </div>
+
+      <div class="group">
+        <h2>What rules is it following?</h2>
+        <ul class="rules">
+          <li>Every press sweeps 0 to 9, falls back to 5, idles, then walks out one digit at a time.</li>
+          <li>A press during the sweep or idle changes where the tubes walk to.</li>
+          <li>A press during the walk-out starts the sweep again.</li>
+          <li>Every tube shows the freshest figure its source has.</li>
+          <li>When new data arrives at rest, tubes walk quietly to the new reading. There's no sweep.</li>
+          <li>A frame file that fails any check is rejected whole, and the last good one stays.</li>
+          <li>When tubes have been pinned for a year, the fetcher builds a new scale and lights the lamp by the covered button.</li>
+          <li>Pressing the covered button moves the board to the new scale, and the reset colour comes on. Button 4 then shows where the old normal sits.</li>
+          <li>A lamp by the tube's name lights when its source reports more slowly than the button's window.</li>
+          <li>A tube goes dark only when it has no reading at all.</li>
+          <li>The lamp test steps every tube through 0 to 9, at one second a digit.</li>
+          <li>0 only appears in the sweep and the lamp test. It's never a reading.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const NAMES = ['LITHO', 'OCEAN', 'ATMOS', 'CRYO', 'CHEMO', 'CYCLO', 'ANTH', 'PALIN', 'SOLAR'];   // the order in the frame file
+  // How the tubes are arranged on the panel: three clusters of like measurements. The file order doesn't change.
+  const CLUSTERS = [
+    { name: 'Natural rhythms', hint: 'they come and go', tubes: ['LITHO', 'SOLAR', 'CYCLO'] },
+    { name: 'Climate', hint: 'air, sea, and ice', tubes: ['ATMOS', 'OCEAN', 'CRYO'] },
+    { name: 'Human', hint: 'what we emit, use, and renew', tubes: ['CHEMO', 'ANTH', 'PALIN'] },
+  ];
+  const ROWOF = NAMES.map(n => CLUSTERS.findIndex(c => c.tubes.includes(n)));
+  const MODES = ['Today', '90 days', 'Year', 'Baseline'];
+  const LEGEND = [
+    ['LITHO', 'a typical day, 90 days, or year of earthquake energy', 'set per button, about energy × 2'],
+    ['OCEAN', 'Year: 2001–2020 average. Today and 90 days: the last ten years', '0.3 °C on Year; 0.15 °C on the others'],
+    ['ATMOS', 'Year: 2001–2020 average. Today and 90 days: the last ten years', '0.3 °C on Year; 0.2 °C on the others'],
+    ['CRYO', 'both poles at their usual ice extent', '0.75 standard deviations'],
+    ['CHEMO', '391 ppm CO₂', '20 ppm'],
+    ['CYCLO', 'a neutral Pacific', '0.5 °C: 6 weak, 7 moderate, 8 strong, 9 very strong El Niño'],
+    ['ANTH', '140,822 TWh a year', '21,123 TWh (15%)'],
+    ['PALIN', '21% of electricity from renewables', '6 percentage points'],
+    ['SOLAR', '57 sunspots', 'curved; none reads 1, about 200 reads 9'],
+  ];
+  const N = null;
+  // The frame file, version 1. This is what the board fetches. "d" holds nine characters per button, one per tube,
+  // each 1 to 9 or "-" for no reading. "slow" marks tubes whose source reports more slowly than that button's window.
+  const SLOWSET = ['000001110', '000000110', '000000000', '000000000'], MADE = '2026-11-13T06:00:00Z';
+  const file = (seq, d, slow = SLOWSET, more = {}) => ({ v: 1, seq, made: MADE, poll: 3600, era: 0, ready: false, glow: '', ...more, d, slow });
+  const SCEN = {
+    demo:  { label: 'Made-up demo data', note: 'These readings are invented to exercise the display. They are not real.',
+             file: file(1, ['688377657', '588276656', '477374657', '555555555']) },
+    first: { label: 'Real readings, 13 November 2026 (shown first)', note: 'A copy of the live file from 13 November 2026. All nine tubes have real readings. CYCLO is at 9 because a very strong El Niño is under way. OCEAN and ATMOS now read daily figures.',
+             file: file(2, ['688379778', '587379775', '467376776', '555555555'], ['000001110', '000000110', '000000000', '000000000']) },
+    calm:  { label: 'Made-up: a calm planet', note: 'Invented. Every system sits at its normal.',
+             file: file(3, ['555555555', '555555555', '555555555', '555555555']) },
+    wild:  { label: 'Made-up: everything off the scale', note: 'Invented. Every tube is pinned at 1 or 9.',
+             file: file(4, ['999191991', '999191991', '999191999', '555555555']) },
+    late:  { label: 'Made-up: years from now, time to reset', note: 'Invented. Several tubes have been pinned for a year, so the fetcher has built a new scale and lit the lamp by the covered button.',
+             file: file(5, ['699199991', '699199991', '599199991', '555555555'], SLOWSET, { ready: true }),
+             next: file(6, ['567376774', '567376773', '466376774', '511915115'], SLOWSET, { era: 1, glow: '7A5CFF' }) },
+  };
+  // The same checks the board should make. A file that fails any of them is rejected whole.
+  function parseFrame(text) {
+    let o; try { o = JSON.parse(text); } catch (e) { return { error: 'That isn\'t valid JSON.' }; }
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return { error: 'The file must be one JSON object.' };
+    if (o.v !== 1) return { error: '"v" must be 1.' };
+    if (!Number.isInteger(o.seq) || o.seq < 0) return { error: '"seq" must be a whole number, 0 or more.' };
+    if (!Number.isInteger(o.poll) || o.poll < 60) return { error: '"poll" must be a whole number of seconds, 60 or more.' };
+    if (typeof o.made !== 'string' || isNaN(Date.parse(o.made))) return { error: '"made" must be a date and time.' };
+    for (const key of ['d', 'slow']) if (!Array.isArray(o[key]) || o[key].length !== 4) return { error: `"${key}" must list four strings, one per button.` };
+    if (!Number.isInteger(o.era) || o.era < 0) return { error: '"era" must be a whole number, 0 or more.' };
+    if (typeof o.ready !== 'boolean') return { error: '"ready" must be true or false.' };
+    if (typeof o.glow !== 'string' || !/^([0-9A-Fa-f]{6})?$/.test(o.glow)) return { error: '"glow" must be empty or six hex characters.' };
+    for (let b = 0; b < 4; b++) {
+      if (typeof o.d[b] !== 'string' || !/^[1-9-]{9}$/.test(o.d[b])) return { error: `Button ${b + 1}: "d" must be nine characters, each 1 to 9 or "-".` };
+      if (typeof o.slow[b] !== 'string' || !/^[01]{9}$/.test(o.slow[b])) return { error: `Button ${b + 1}: "slow" must be nine characters, each 0 or 1.` };
+    }
+    return { file: o, frame: o.d.map(r => [...r].map(c => c === '-' ? N : +c)), slow: o.slow.map(r => [...r].flatMap((c, i) => c === '1' ? [i] : [])) };
+  }
+  const fmt = f => `{\n  "v": ${f.v},\n  "seq": ${f.seq},\n  "made": "${f.made}",\n  "poll": ${f.poll},\n  "era": ${f.era},\n  "ready": ${f.ready},\n  "glow": "${f.glow}",\n  "d":    ${JSON.stringify(f.d)},\n  "slow": ${JSON.stringify(f.slow)}\n}`;
+  // Each scale lives at its own address: frame-0.json, frame-1.json, and so on. The board fetches the one for its stored era.
+  for (const k in SCEN) {
+    Object.assign(SCEN[k], parseFrame(JSON.stringify(SCEN[k].file)));
+    SCEN[k].eras = [parseFrame(JSON.stringify(SCEN[k].file))].concat(SCEN[k].next ? [parseFrame(JSON.stringify(SCEN[k].next))] : []);
+  }
+  const SLOW = SCEN.demo.slow;
+
+  // ---------- Tube model (same electrical model as the single-tube emulator) ----------
+  const P = { freq: 60, peak: 125, vPrimed: 105, vBare: 135, vHold: 85 };
+  const DT = 1e-4, K = 1 - Math.exp(-DT / 0.035);
+  const tubes = NAMES.map((_, id) => ({ id, cell: -1, glow: new Float32Array(10), sum: new Float32Array(10), eye: new Float32Array(10), sel: -1, dead: -1 }));
+  // The glow really does pulse 60 times a second. An eye can't follow that and sees the average, so that is what gets
+  // drawn: the glow averaged over each whole supply cycle. Drawing the raw pulse instead makes it beat against the
+  // screen's own refresh and shimmer far more than a real tube does. The switch in Options shows the raw pulse.
+  const CYCLE = Math.round(1 / (P.freq * DT)), EYE_GAIN = 1.18;
+  let inCycle = 0, raw = false;
+  let t = 0, budget = 0;
+  function stepAll() {
+    const va = P.peak * Math.max(0, Math.sin(2 * Math.PI * P.freq * t));
+    for (const tb of tubes) {
+      if (tb.cell !== -1) { if (va < P.vHold) tb.cell = -1; }
+      else if (tb.sel >= 0 && va >= P.vPrimed) {
+        tb.cell = tb.sel === tb.dead ? -2 : tb.sel;
+        if (tb.cell === -2 && sense) faults.add(tb.id * 10 + tb.sel);   // the board notices a strike that never came
+      }
+      for (let i = 0; i < 10; i++) { tb.glow[i] += ((tb.cell === i ? 1 : 0) - tb.glow[i]) * K; tb.sum[i] += tb.glow[i]; }
+    }
+    if (++inCycle >= CYCLE) { inCycle = 0; for (const tb of tubes) for (let i = 0; i < 10; i++) { tb.eye[i] = tb.sum[i] / CYCLE * EYE_GAIN; tb.sum[i] = 0; } }
+    t += DT;
+  }
+
+  // ---------- Driver: the only two calls the choreographer makes ----------
+  const driver = { show(i, d) { tubes[i].sel = d; }, blank(i) { tubes[i].sel = -1; } };
+
+  // ---------- Choreographer ----------
+  const BASE = { step: 0.22, walk: 0.7, idle: 2 }, ROW = 0.12;
+  let pace = 1, STEP = BASE.step, WALK = BASE.walk, SWEEP = 14 * STEP;   // 0..9 then 8,7,6,5
+  let mode = 0, anim = null, asleep = false, ripple = false, scen = 'first', phase = 'rest', lamp = null, sense = true;
+  const faults = new Set();
+  function startLamp() { asleep = false; anim = null; lamp = { t0: t }; }
+  let eras = SCEN.first.eras, era = 0, cur = eras[0], lastQuiet = -Infinity;
+  const frame = () => cur.frame, shown = [N, N, N, N, N, N, N, N, N];
+  const put = (i, v) => { shown[i] = v; v === N ? driver.blank(i) : driver.show(i, v); };
+  function begin(cold) { anim = { t0: t, idle: cold ? 5 : BASE.idle * pace }; }
+  function press(m) {
+    lamp = null; mode = m;
+    if (asleep) { asleep = false; begin(true); return; }
+    if (!anim || phase === 'walk') begin(false);
+  }
+  function tick() {
+    if (asleep) { phase = 'asleep'; for (let i = 0; i < 9; i++) driver.blank(i); return; }
+    const target = frame()[mode];
+    if (lamp) {
+      const d = Math.floor(t - lamp.t0);            // one second a digit
+      if (d > 9) { lamp = null; for (let i = 0; i < 9; i++) put(i, target[i]); }
+      else { phase = 'lamp'; for (let i = 0; i < 9; i++) put(i, d); return; }
+    }
+    if (!anim) {
+      // Resting. If new data has arrived, each tube walks quietly to its new reading, one digit per beat, with no sweep.
+      phase = 'rest';
+      if (t - lastQuiet >= WALK) {
+        lastQuiet = t;
+        for (let i = 0; i < 9; i++) {
+          const g = target[i], s = shown[i];
+          if (s !== g) put(i, s === N || g === N ? g : s + Math.sign(g - s));
+        }
+      }
+      return;
+    }
+    const e = t - anim.t0, sweepEnd = SWEEP + (ripple ? 2 * ROW : 0), idleEnd = sweepEnd + anim.idle;
+    if (e < idleEnd) {
+      phase = e < sweepEnd ? 'sweep' : 'idle';
+      for (let i = 0; i < 9; i++) {
+        const tau = e - (ripple ? ROWOF[i] * ROW : 0);
+        if (tau < 0) put(i, N);
+        else if (tau < 10 * STEP) put(i, Math.floor(tau / STEP));
+        else if (tau < SWEEP) put(i, 8 - Math.floor((tau - 10 * STEP) / STEP));
+        else put(i, 5);
+      }
+    } else {
+      // Walk out one digit per beat, from wherever each tube is now. Stepping from the shown digit, not from a
+      // formula, means new data arriving mid-walk can't make a tube jump.
+      phase = 'walk';
+      const k = Math.floor((e - idleEnd) / WALK) + 1;
+      while ((anim.k || 0) < k) {
+        anim.k = (anim.k || 0) + 1;
+        for (let i = 0; i < 9; i++) {
+          const g = target[i], s = shown[i];
+          if (s !== g) put(i, s === N || g === N ? g : s + Math.sign(g - s));
+        }
+      }
+      if (shown.every((s, i) => s === target[i])) anim = null;
+    }
+  }
+
+  // ---------- Page ----------
+  const $ = id => document.getElementById(id);
+  const lamps = [];
+  const ctxs = new Array(9);
+  for (const cl of CLUSTERS) {
+    const box = document.createElement('div'); box.className = 'cluster';
+    const head = document.createElement('div'); head.className = 'clhead'; head.innerHTML = `<b>${cl.name}</b><span>${cl.hint}</span>`;
+    const row = document.createElement('div'); row.className = 'grid';
+    for (const name of cl.tubes) {
+      const idx = NAMES.indexOf(name), cell = document.createElement('div'); cell.className = 'cell';
+      const c = document.createElement('canvas'); c.setAttribute('aria-label', name + ' tube');
+      const s = document.createElement('span'), l = document.createElement('i');
+      l.className = 'lamp'; s.append(l, name); lamps[idx] = l;
+      cell.append(c, s); row.appendChild(cell); ctxs[idx] = c.getContext('2d');
+    }
+    box.append(head, row); $('grid').appendChild(box);
+  }
+  MODES.forEach((m, i) => {
+    const b = document.createElement('button'); b.dataset.m = i;
+    b.innerHTML = `<span class="cap">${i + 1}</span><small>${m}</small>`;
+    let hold = null, held = false;
+    b.onpointerdown = () => { held = false; hold = setTimeout(() => { held = true; startLamp(); }, 3000); };
+    b.onpointerup = b.onpointerleave = () => clearTimeout(hold);
+    b.onclick = () => { if (held) { held = false; return; } press(i); };
+    $('keys').appendChild(b);
+  });
+  for (const k in SCEN) $('scen').add(new Option(SCEN[k].label, k));
+  const loadScen = () => { live = false; ticket++; $('scen').value = scen; eras = SCEN[scen].eras; era = 0; cur = eras[0]; $('scennote').textContent = SCEN[scen].note; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = ''; };
+  $('scen').add(new Option('Live data from the address above', 'live'));
+  $('scen').onchange = e => { if (e.target.value === 'live') { e.target.value = scen; fetchLive(); return; } scen = e.target.value; loadScen(); };
+
+  // ---------- Live fetch: what the board does on its own every hour, done here on demand ----------
+  // It gets the file for the scale the board is on, runs the same checks, and takes all of it or none of it.
+  const LIVE = 'https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/frame-0.json';
+  $('fetchurl').value = LIVE; $('fetchurl').oninput = () => { live = false; };
+  let live = false, fetching = false, ticket = 0, fetched = { state: 'none', word: 'Not tried yet', msg: '' };
+  const setFetch = (state, word, msg) => { fetched = { state, word, msg }; $('fetchlamp').className = 'lamp big ' + state; $('fetchword').textContent = word; $('fetchmsg').textContent = msg; return fetched; };
+  const ago = ms => { const m = Math.round(ms / 60000); return m < 1 ? 'just now' : m < 90 ? `${m} minute${m === 1 ? '' : 's'} ago` : m < 48 * 60 ? `${Math.round(m / 60)} hours ago` : `${Math.round(m / 1440)} days ago`; };
+  const addressFor = e => $('fetchurl').value.trim().replace(/frame-\d+\.json/, `frame-${e}.json`);
+  // A server that never answers must not leave the button stuck, so every call gives up after a while.
+  async function getFrame(url, fetcher, nowMs, waitMs) {
+    let text, timer;
+    try {
+      const call = (async () => { const res = await fetcher(url + (url.includes('?') ? '&' : '?') + 't=' + nowMs, { cache: 'no-store' }); return res.ok ? { text: await res.text() } : { why: 'status', status: res.status }; })();
+      const got = await Promise.race([call, new Promise(done => { timer = setTimeout(() => done({ why: 'slow' }), waitMs); })]);
+      if (got.why) return got;
+      text = got.text;
+    } catch (e) { return { why: 'reach' }; } finally { clearTimeout(timer); }
+    const r = parseFrame(text);
+    return r.error ? { why: 'checks', error: r.error } : r;
+  }
+  const KEEP = ' The tubes keep the last good frame.';
+  // Some viewers (Claude's own is one) don't let a page call outside addresses. There the fetch is handed to the copy of
+  // this emulator on the open web: a small window opens on it, it fetches the file, passes it back, and closes itself.
+  const WEB = 'https://wocketfone.github.io', WEBPAGE = WEB + '/earth-dashboard/', onWeb = location.origin === WEB;
+  let blocked = false, relayTrouble = '';
+  function relayFetcher() {
+    let got = null;
+    return async u => {
+      const clean = u.replace(/[?&]t=\d+$/, '');
+      if (!got) got = new Promise(done => {
+        const w = window.open(WEBPAGE + '?relay=' + encodeURIComponent(clean), 'earthrelay', 'width=460,height=360');
+        if (!w) return done(null);
+        const on = e => { if (e.origin === WEB && e.data && e.data.earthRelay) { window.removeEventListener('message', on); done(e.data.results || {}); } };
+        window.addEventListener('message', on);
+      });
+      const map = await got;
+      if (!map) { relayTrouble = 'popup'; throw new Error('popup'); }
+      const r = map[clean];
+      if (!r || r.error) throw new TypeError('unreachable');
+      return { ok: r.ok, status: r.status, text: async () => r.text };
+    };
+  }
+  async function fetchLive(given = null, nowMs = Date.now(), waitMs = 15000) {
+    if (fetching) return null;
+    fetching = true; $('fetchnow').disabled = true; setFetch('busy', 'Fetching', '');
+    try {
+      const url = live ? addressFor(era) : $('fetchurl').value.trim();
+      if (!/^https?:\/\//i.test(url)) return setFetch('bad', 'Bad', 'The address has to start with http:// or https://.' + KEEP);
+      let fetcher = given || (blocked ? relayFetcher() : (u, o) => fetch(u, o)), relayed = !given && blocked; relayTrouble = '';
+      const mine = ++ticket; let r = await getFrame(url, fetcher, nowMs, waitMs);
+      // First failure in a viewer that blocks outside calls: remember that, and go through the web copy from now on.
+      if (r.why === 'reach' && !given && !blocked && !onWeb) { blocked = relayed = true; fetcher = relayFetcher(); r = await getFrame(url, fetcher, nowMs, waitMs); }
+      const VIA = 'This copy can\'t call outside addresses itself, so it asks the copy on the web to fetch for it. ';
+      if (relayed && relayTrouble === 'popup') return setFetch('bad', 'Bad', VIA + 'The browser blocked the small window that needs. Allow pop-ups and press again, or open wocketfone.github.io/earth-dashboard.' + KEEP);
+      if (relayed && r.why === 'slow') return setFetch('bad', 'Bad', VIA + 'A window opened there, but nothing came back to this copy. Live data works in that window.' + KEEP);
+      // If another data set was chosen while this was on its way, that choice stands.
+      if (mine !== ticket) return setFetch('none', 'Not used', 'You picked other data while this was fetching, so the fetched file was set aside.');
+      if (r.why === 'slow') return setFetch('bad', 'Bad', `No answer after ${Math.round(waitMs / 1000)} seconds, so the fetch was given up.` + KEEP);
+      if (r.why === 'reach') return setFetch('bad', 'Bad', 'Couldn\'t reach the address. ' + (/github\.io$/.test(location.hostname) ? 'Check the address and the internet connection.' : 'Inside Claude\'s viewer that\'s expected, because pages there aren\'t allowed to call outside addresses. The same emulator at wocketfone.github.io/earth-dashboard can.') + KEEP);
+      if (r.why === 'status') return setFetch('bad', 'Bad', `The server answered ${r.status}${r.status === 404 ? ', which means there\'s no file at that address' : ''}.` + KEEP);
+      if (r.why === 'checks') return setFetch('bad', 'Bad', 'The file arrived but failed the board\'s checks, so all of it was rejected. ' + r.error + KEEP);
+      const same = live && cur.file.seq === r.file.seq && cur.file.made === r.file.made && cur.file.era === r.file.era;
+      eras = []; era = r.file.era; eras[era] = r; cur = r; live = true; scen = 'live';
+      // If a newer scale is ready, get that file too, so the covered button has somewhere to go.
+      if (r.file.ready) { const nx = await getFrame(addressFor(era + 1), fetcher, nowMs, waitMs); if (!nx.why && nx.file.era === era + 1) eras[era + 1] = nx; }
+      $('scen').value = 'live'; $('scennote').textContent = 'Live readings, fetched from the address above.'; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = '';
+      const age = nowMs - Date.parse(r.file.made), when = `Frame ${r.file.seq}, made ${ago(age)}.`;
+      if (age > 26 * 3600000) return setFetch('old', 'Old', `${when} The file passed every check, but the fetcher refreshes it at least once a day, so the fetcher has stopped. The tubes show it anyway.`);
+      if (relayed) $('scennote').textContent = 'Live readings, fetched through the copy of this emulator on the web.';
+      return setFetch('good', 'Good', `${when} It passed every check. ` + (same ? 'Nothing has changed since the last fetch.' : 'The tubes walk quietly to any new reading.'));
+    } finally { fetching = false; $('fetchnow').disabled = false; }
+  }
+  $('fetchnow').onclick = () => { fetchLive(); };
+  ticket = 0;
+  // The other half of the relay. Opened as "?relay=<address>" on the web copy, this page fetches that file (and the next
+  // scale's, if the lamp is lit), hands the answers back to whoever opened it, and closes.
+  const relayFor = new URLSearchParams(location.search).get('relay');
+  if (onWeb && relayFor && /^https:\/\//i.test(relayFor)) (async () => {
+    const one = async u => { try { const res = await Promise.race([fetch(u + (u.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' }), new Promise((_, no) => setTimeout(() => no(new Error('slow')), 10000))]); return { ok: res.ok, status: res.status, text: res.ok ? await res.text() : '' }; } catch (e) { return { error: true }; } };
+    const results = {}; results[relayFor] = await one(relayFor);
+    const p = results[relayFor].ok ? parseFrame(results[relayFor].text) : null;
+    if (p && !p.error && p.file.ready) { const nx = relayFor.replace(/frame-\d+\.json/, `frame-${p.file.era + 1}.json`); if (nx !== relayFor) results[nx] = await one(nx); }
+    if (window.opener) { try { window.opener.postMessage({ earthRelay: 1, results }, '*'); } catch (e) { /* nobody to tell */ } setTimeout(() => window.close(), 400); }
+    else { $('fetchurl').value = relayFor; fetchLive(); }          // no way to pass it back, so show the live data here
+  })();
+  $('sendframe').onclick = () => {
+    const r = parseFrame($('framebox').value);
+    if (r.error) { $('framemsg').textContent = 'Rejected, and the last good frame stays. ' + r.error; return; }
+    live = false; ticket++; eras = [r]; era = 0; cur = r; $('framemsg').textContent = `Accepted frame ${r.file.seq}. The tubes walk quietly to any new reading.`;
+  };
+  loadScen();
+  $('wake').onclick = () => { asleep = false; lamp = null; begin(true); };
+  $('sleep').onclick = () => { asleep = true; anim = null; lamp = null; };
+  // The covered button. It only works when the fetcher has a newer scale ready. The board stores the new era and fetches that file.
+  function pressReset() {
+    if (!cur.file.ready || !eras[era + 1]) { $('resetmsg').textContent = 'Nothing happens, as on the real instrument. The lamp isn\'t lit, so there\'s no newer scale yet. Use "Jump ahead" to see a reset.'; return false; }
+    era++; cur = eras[era]; asleep = false; lamp = null; begin(true);
+    $('framebox').value = fmt(cur.file); $('resetmsg').textContent = `Reset. The board now fetches frame-${era}.json, and the tubes are measured against the new normal.`;
+    return true;
+  }
+  $('reset').onclick = () => {
+    if (!$('cover').checked) { $('resetmsg').textContent = 'The cover is down. Lift it first.'; return; }
+    pressReset();
+  };
+  // Bench shortcut: skip ahead to made-up data where a reset is due, so the button has something to do.
+  $('jump').onclick = () => { scen = 'late'; $('scen').value = 'late'; loadScen(); $('resetmsg').textContent = 'Years have passed. Tubes are pinned and the lamp is lit. Lift the cover and press.'; };
+  $('lamp').onclick = startLamp;
+  $('sense').onchange = e => { sense = e.target.checked; faults.clear(); };
+  $('ripple').onchange = e => ripple = e.target.checked;
+  $('rawglow').onchange = e => raw = e.target.checked;
+  $('pace').oninput = e => {
+    pace = +e.target.value / 100; STEP = BASE.step * pace; WALK = BASE.walk * pace; SWEEP = 14 * STEP;
+    $('pacev').textContent = Math.round(STEP * 1000) + ' ms a digit';
+  };
+  let zeroDeg = 90;
+  $('mount').onchange = e => zeroDeg = +e.target.value;
+  $('fdigit').add(new Option('none', -1)); for (let i = 0; i < 10; i++) $('fdigit').add(new Option(i, i));
+  NAMES.forEach((n, i) => $('ftube').add(new Option(n, i)));
+  const setFault = () => { faults.clear(); tubes.forEach(tb => tb.dead = -1); tubes[+$('ftube').value].dead = +$('fdigit').value; };
+  $('fdigit').onchange = setFault; $('ftube').onchange = setFault;
+  $('legend').innerHTML = LEGEND.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+
+  function drawTube(c, tb) {
+    const cv = c.canvas, dpr = window.devicePixelRatio || 1, px = Math.round(cv.clientWidth * dpr);
+    if (cv.width !== px) { cv.width = px; cv.height = px; }
+    const W = cv.width, cx = W / 2, cy = W / 2, R = W * 0.44;
+    c.clearRect(0, 0, W, W);
+    let g = c.createRadialGradient(cx, cy, R * 0.2, cx, cy, R * 1.08);
+    g.addColorStop(0, '#231c19'); g.addColorStop(1, '#0d0a09');
+    c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 1.08, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#4a433f'; c.lineWidth = W * 0.008; c.stroke();
+    const seen = raw ? tb.glow : tb.eye; let lit = 0; for (let i = 0; i < 10; i++) lit = Math.max(lit, seen[i]);
+    const dim = 0.55 + 0.45 * Math.min(1, lit * 3.2);          // an unlit tube sits a little darker
+    g = c.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
+    g.addColorStop(0, `rgb(${169 * dim | 0},${169 * dim | 0},${162 * dim | 0})`); g.addColorStop(1, `rgb(${109 * dim | 0},${109 * dim | 0},${103 * dim | 0})`);
+    c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 0.97, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#3a3a36'; c.lineWidth = Math.max(1, W * 0.004);
+    for (let i = 0; i < 10; i++) {
+      const a = (zeroDeg + (i + 0.5) * 36) * Math.PI / 180;
+      c.beginPath(); c.moveTo(cx + Math.cos(a) * R * 0.56, cy + Math.sin(a) * R * 0.56);
+      c.lineTo(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95); c.stroke();
+    }
+    c.fillStyle = `rgb(${150 * dim | 0},${150 * dim | 0},${144 * dim | 0})`; c.beginPath(); c.arc(cx, cy, R * 0.26, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#55554f'; c.beginPath(); c.arc(cx, cy, R * 0.07, 0, Math.PI * 2); c.fill();
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = `600 ${R * 0.2}px "IBM Plex Sans", system-ui, sans-serif`;
+    for (let i = 0; i < 10; i++) {
+      const a = (zeroDeg + i * 36) * Math.PI / 180;
+      const x = cx + Math.cos(a) * R * 0.74, y = cy + Math.sin(a) * R * 0.74;
+      const b = Math.min(1, seen[i] * 3.2);
+      c.shadowBlur = 0; c.fillStyle = '#26221f'; c.fillText(i, x, y);
+      if (b > 0.01) {
+        const halo = c.createRadialGradient(x, y, 0, x, y, R * 0.34);
+        halo.addColorStop(0, `rgba(255,96,40,${0.5 * b})`); halo.addColorStop(1, 'rgba(255,96,40,0)');
+        c.fillStyle = halo; c.beginPath(); c.arc(x, y, R * 0.34, 0, Math.PI * 2); c.fill();
+        c.shadowColor = `rgba(255,90,30,${b})`; c.shadowBlur = R * 0.16 * b;
+        c.fillStyle = `rgba(255,${Math.round(130 + 70 * b)},${Math.round(70 * b)},${b})`;
+        c.fillText(i, x, y); c.fillText(i, x, y); c.shadowBlur = 0;
+      }
+    }
+  }
+
+  const PHASE = { asleep: 'Asleep. All tubes dark.', sweep: 'Sweeping every digit.', idle: 'Idling at normal.', walk: 'Walking out to the readings.', rest: 'Resting on the readings.' };
+  function paintState() {
+    $('state').textContent = asleep ? PHASE.asleep : phase === 'lamp' ? `Lamp test. Every tube should show ${tubes[0].sel}.` : `Button ${mode + 1}, ${MODES[mode]}. ${PHASE[phase]}`;
+    const settled = !asleep && (phase === 'walk' || phase === 'rest');
+    const halo = cur.file.glow && !asleep ? `drop-shadow(0 0 7px #${cur.file.glow}) drop-shadow(0 0 14px #${cur.file.glow})` : '';
+    ctxs.forEach(c => { if (c.canvas.style.filter !== halo) c.canvas.style.filter = halo; });
+    $('readylamp').classList.toggle('on', cur.file.ready);
+    $('readytxt').textContent = cur.file.ready ? 'The lamp is lit. A newer scale is ready.' : `The lamp is dark. The board is on scale ${cur.file.era}.`;
+    lamps.forEach((l, i) => l.classList.toggle('on', settled && cur.slow[mode].includes(i) && frame()[mode][i] !== N));
+    $('sensed').textContent = !sense ? 'Sensing is off. A dead digit goes unnoticed.'
+      : faults.size ? 'The board has sensed a failed strike: ' + [...faults].map(f => NAMES[f / 10 | 0] + ' digit ' + f % 10).join('; ') + '.'
+      : 'The board has sensed nothing wrong.';
+    document.querySelectorAll('#keys button').forEach(b => b.setAttribute('aria-pressed', !asleep && +b.dataset.m === mode));
+  }
+
+  let last = performance.now(), fr = 0;
+  function loop(now) {
+    const real = Math.min(0.1, (now - last) / 1000); last = now;
+    if (!manual) {
+      budget += real / DT; const steps = Math.floor(budget); budget -= steps;
+      for (let i = 0; i < steps; i++) { if (i % 20 === 0) tick(); stepAll(); }
+      tick();
+    }
+    for (let i = 0; i < 9; i++) drawTube(ctxs[i], tubes[i]);
+    if (fr++ % 6 === 0) paintState();
+    requestAnimationFrame(loop);
+  }
+  tick(); for (let i = 0; i < 3000; i++) stepAll();   // first frame already shows the resting readings
+  paintState(); requestAnimationFrame(loop);
+  // Test hook: advance(seconds) steps the simulation deterministically instead of following the clock.
+  let manual = false;
+  window.__emu = {
+    tubes, press, startLamp, SCEN, SLOW, BASE, DT, parseFrame,
+    advance(sec) { manual = true; const n = Math.round(sec / DT); for (let i = 0; i < n; i++) { if (i % 20 === 0) tick(); stepAll(); } tick(); paintState(); },
+    pressReset, fetchLive, fetched: () => ({ ...fetched, live, blocked, era, seq: cur.file.seq, next: !!eras[era + 1], busy: fetching }),
+    // Test hook: switch data set at once, with no walk.
+    useScen(k) { scen = k; loadScen(); anim = null; lamp = null; for (let i = 0; i < 9; i++) put(i, cur.frame[mode][i]); },
+    state: () => ({ t, mode, phase, asleep, scen, STEP, WALK, era, ready: cur.file.ready, glow: cur.file.glow, halo: ctxs[0].canvas.style.filter,
+      sel: tubes.map(x => x.sel), cell: tubes.map(x => x.cell), raw, eye: tubes.map(x => Array.from(x.eye)), glowNow: tubes.map(x => Array.from(x.glow)),
+      lit: tubes.map(x => { let m = -1, b = 0.08; x.glow.forEach((g, i) => { if (g > b) { b = g; m = i; } }); return m; }),
+      lamps: lamps.map(l => l.classList.contains('on')), sensed: [...faults] }),
+  };
+})();
+</script>
+
+</body></html>
