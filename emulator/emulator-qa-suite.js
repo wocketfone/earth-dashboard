@@ -229,4 +229,15 @@ for(const scheme of ['light','dark'])for(const w of [1120,400]){const p=await b.
   const p=await ctx.newPage();let pops=0;p.on('popup',()=>pops++);await p.goto(WEB);await p.waitForTimeout(200);await p.click('#fetchnow');await done(p);f=await p.evaluate(()=>window.__emu.fetched());ok(f.state==='good'&&!f.blocked&&pops===0,'T25 on the web copy the fetch is direct, with no helper window');
   const q=await ctx.newPage();await q.goto(WEB+'?relay='+encodeURIComponent(RAW+'frame-0.json'));await done(q);f=await q.evaluate(()=>window.__emu.fetched());ok(f.state==='good'&&f.live&&!q.isClosed(),'T25 a relay window with nobody to answer shows the live data itself');
   const z=await ctx.newPage();await z.goto(WEB+'?relay='+encodeURIComponent('javascript:alert(1)'));await z.waitForTimeout(400);ok((await z.evaluate(()=>window.__emu.fetched())).state==='none','T25 a relay address that is not https is ignored');await ctx.close()}}
+// T26 what the eye sees: the drawn glow is steady, while the modelled glow still pulses underneath
+{const p=await fresh();await p.adv(10);const tgt=SCEN.demo.frame[0];const eyes=[],raws=[];
+ for(let k=0;k<40;k++){await p.adv(0.0137);const s=await p.st();eyes.push(s.eye.map((e,i)=>e[tgt[i]]));raws.push(s.glowNow.map((e,i)=>e[tgt[i]]))}   // 40 looks at odd moments within the cycle
+ for(let i=0;i<9;i++){const e=eyes.map(r=>r[i]),r=raws.map(x=>x[i]),sp=a=>(Math.max(...a)-Math.min(...a))/Math.max(...a);
+   ok(sp(e)<0.01,`T26 tube ${i}: the drawn glow is steady at rest (varies ${(sp(e)*100).toFixed(2)}%)`);ok(sp(r)>0.15,`T26 tube ${i}: the modelled glow still pulses (${(sp(r)*100).toFixed(0)}%)`);
+   ok(e[0]*3.2>0.75&&e[0]*3.2<=1.05,`T26 tube ${i}: drawn at a sensible brightness (${(e[0]*3.2).toFixed(2)})`)}
+ let s=await p.st();ok(s.eye.every((e,i)=>e.every((v,d)=>d===tgt[i]||v<0.01)),'T26 no other digit shows any glow at rest');ok(s.raw===false&&!(await p.isChecked('#rawglow')),'T26 the raw pulse is off unless asked for');
+ // a digit change still reads crisply: the old digit is gone and the new one up within a tenth of a second
+ await p.press(1);await p.adv(0.02);await p.adv(0.22*3+0.12);s=await p.st();ok(s.eye.every(e=>e[3]*3.2>0.6&&e[2]*3.2<0.15),'T26 during the sweep the eye sees digit 3 lit and digit 2 nearly gone: '+s.eye[0].map(v=>v.toFixed(2)).join(' '));
+ await p.click('#sleep');await p.adv(0.5);s=await p.st();ok(s.eye.every(e=>e.every(v=>v<0.005)),'T26 asleep, nothing is drawn lit');
+ await p.check('#rawglow');ok((await p.st()).raw===true,'T26 the switch turns the raw pulse on');ok(p.errs.length===0,'T26 no script errors');await p.close()}
 console.log(`PASS ${pass}  FAIL ${fail}`);fails.forEach(f=>console.log(' x',f));await b.close()})()

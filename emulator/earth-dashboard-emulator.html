@@ -149,6 +149,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
         <h2>Options</h2>
         <div class="row">
           <label for="ripple"><input type="checkbox" id="ripple"> Ripple the sweep down the rows</label>
+          <label for="rawglow"><input type="checkbox" id="rawglow"> Show the raw 60 Hz pulse (shimmers on a screen)</label>
           <label for="pace" class="wide">Pace <b id="pacev">220 ms a digit</b>
             <input type="range" id="pace" min="50" max="200" value="100"></label>
         </div>
@@ -268,7 +269,12 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   // ---------- Tube model (same electrical model as the single-tube emulator) ----------
   const P = { freq: 60, peak: 125, vPrimed: 105, vBare: 135, vHold: 85 };
   const DT = 1e-4, K = 1 - Math.exp(-DT / 0.035);
-  const tubes = NAMES.map((_, id) => ({ id, cell: -1, glow: new Float32Array(10), sel: -1, dead: -1 }));
+  const tubes = NAMES.map((_, id) => ({ id, cell: -1, glow: new Float32Array(10), sum: new Float32Array(10), eye: new Float32Array(10), sel: -1, dead: -1 }));
+  // The glow really does pulse 60 times a second. An eye can't follow that and sees the average, so that is what gets
+  // drawn: the glow averaged over each whole supply cycle. Drawing the raw pulse instead makes it beat against the
+  // screen's own refresh and shimmer far more than a real tube does. The switch in Options shows the raw pulse.
+  const CYCLE = Math.round(1 / (P.freq * DT)), EYE_GAIN = 1.18;
+  let inCycle = 0, raw = false;
   let t = 0, budget = 0;
   function stepAll() {
     const va = P.peak * Math.max(0, Math.sin(2 * Math.PI * P.freq * t));
@@ -278,8 +284,9 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
         tb.cell = tb.sel === tb.dead ? -2 : tb.sel;
         if (tb.cell === -2 && sense) faults.add(tb.id * 10 + tb.sel);   // the board notices a strike that never came
       }
-      for (let i = 0; i < 10; i++) tb.glow[i] += ((tb.cell === i ? 1 : 0) - tb.glow[i]) * K;
+      for (let i = 0; i < 10; i++) { tb.glow[i] += ((tb.cell === i ? 1 : 0) - tb.glow[i]) * K; tb.sum[i] += tb.glow[i]; }
     }
+    if (++inCycle >= CYCLE) { inCycle = 0; for (const tb of tubes) for (let i = 0; i < 10; i++) { tb.eye[i] = tb.sum[i] / CYCLE * EYE_GAIN; tb.sum[i] = 0; } }
     t += DT;
   }
 
@@ -487,6 +494,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   $('lamp').onclick = startLamp;
   $('sense').onchange = e => { sense = e.target.checked; faults.clear(); };
   $('ripple').onchange = e => ripple = e.target.checked;
+  $('rawglow').onchange = e => raw = e.target.checked;
   $('pace').oninput = e => {
     pace = +e.target.value / 100; STEP = BASE.step * pace; WALK = BASE.walk * pace; SWEEP = 14 * STEP;
     $('pacev').textContent = Math.round(STEP * 1000) + ' ms a digit';
@@ -508,7 +516,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     g.addColorStop(0, '#231c19'); g.addColorStop(1, '#0d0a09');
     c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R * 1.08, 0, Math.PI * 2); c.fill();
     c.strokeStyle = '#4a433f'; c.lineWidth = W * 0.008; c.stroke();
-    let lit = 0; for (let i = 0; i < 10; i++) lit = Math.max(lit, tb.glow[i]);
+    const seen = raw ? tb.glow : tb.eye; let lit = 0; for (let i = 0; i < 10; i++) lit = Math.max(lit, seen[i]);
     const dim = 0.55 + 0.45 * Math.min(1, lit * 3.2);          // an unlit tube sits a little darker
     g = c.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
     g.addColorStop(0, `rgb(${169 * dim | 0},${169 * dim | 0},${162 * dim | 0})`); g.addColorStop(1, `rgb(${109 * dim | 0},${109 * dim | 0},${103 * dim | 0})`);
@@ -526,7 +534,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     for (let i = 0; i < 10; i++) {
       const a = (zeroDeg + i * 36) * Math.PI / 180;
       const x = cx + Math.cos(a) * R * 0.74, y = cy + Math.sin(a) * R * 0.74;
-      const b = Math.min(1, tb.glow[i] * 3.2);
+      const b = Math.min(1, seen[i] * 3.2);
       c.shadowBlur = 0; c.fillStyle = '#26221f'; c.fillText(i, x, y);
       if (b > 0.01) {
         const halo = c.createRadialGradient(x, y, 0, x, y, R * 0.34);
@@ -577,7 +585,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     // Test hook: switch data set at once, with no walk.
     useScen(k) { scen = k; loadScen(); anim = null; lamp = null; for (let i = 0; i < 9; i++) put(i, cur.frame[mode][i]); },
     state: () => ({ t, mode, phase, asleep, scen, STEP, WALK, era, ready: cur.file.ready, glow: cur.file.glow, halo: ctxs[0].canvas.style.filter,
-      sel: tubes.map(x => x.sel), cell: tubes.map(x => x.cell),
+      sel: tubes.map(x => x.sel), cell: tubes.map(x => x.cell), raw, eye: tubes.map(x => Array.from(x.eye)), glowNow: tubes.map(x => Array.from(x.glow)),
       lit: tubes.map(x => { let m = -1, b = 0.08; x.glow.forEach((g, i) => { if (g > b) { b = g; m = i; } }); return m; }),
       lamps: lamps.map(l => l.classList.contains('on')), sensed: [...faults] }),
   };
