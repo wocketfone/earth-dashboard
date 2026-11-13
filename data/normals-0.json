@@ -1,29 +1,45 @@
 {
  "era": 0,
  "period": "2001-2020",
- "made": "2026-11-13T15:04:28.184Z",
+ "made": "2026-11-13T17:54:39.180Z",
  "tubes": {
   "OCEAN": {
-   "source": "ocean-ncei",
+   "source": "ocean-daily-ecmwf",
+   "daily": true,
    "transform": "linear",
-   "normal": 0.538,
+   "normal": 20.426,
    "step": 0.3,
    "recentStep": 0.15,
    "recentYears": 10,
-   "cadence": 30,
+   "cadence": 1,
    "unit": "degrees C",
-   "months": 240
+   "days": 7305,
+   "fallback": {
+    "source": "ocean-ncei",
+    "normal": 0.538,
+    "recentStep": 0.15,
+    "cadence": 30,
+    "months": 240
+   }
   },
   "ATMOS": {
-   "source": "atmos-gistemp",
+   "source": "atmos-daily-ecmwf",
+   "daily": true,
    "transform": "linear",
-   "normal": 0.727,
+   "normal": 14.5,
    "step": 0.3,
-   "recentStep": 0.15,
+   "recentStep": 0.2,
    "recentYears": 10,
-   "cadence": 30,
+   "cadence": 1,
    "unit": "degrees C",
-   "months": 240
+   "days": 7305,
+   "fallback": {
+    "source": "atmos-gistemp",
+    "normal": 0.727,
+    "recentStep": 0.15,
+    "cadence": 30,
+    "months": 240
+   }
   },
   "CHEMO": {
    "source": "chemo-daily",
