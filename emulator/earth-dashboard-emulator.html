@@ -214,7 +214,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   const LEGEND = [
     ['LITHO', 'a typical day, 90 days, or year of earthquake energy', 'set per button, about energy × 2'],
     ['OCEAN', 'Year: 2001–2020 average. Today and 90 days: the last ten years', '0.3 °C on Year; 0.15 °C on the others'],
-    ['ATMOS', 'Year: 2001–2020 average. Today and 90 days: the last ten years', '0.3 °C on Year; 0.15 °C on the others'],
+    ['ATMOS', 'Year: 2001–2020 average. Today and 90 days: the last ten years', '0.3 °C on Year; 0.2 °C on the others'],
     ['CRYO', 'both poles at their usual ice extent', '0.75 standard deviations'],
     ['CHEMO', '391 ppm CO₂', '20 ppm'],
     ['CYCLO', 'a neutral Pacific', '0.5 °C: 6 weak, 7 moderate, 8 strong, 9 very strong El Niño'],
@@ -225,13 +225,13 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   const N = null;
   // The frame file, version 1. This is what the board fetches. "d" holds nine characters per button, one per tube,
   // each 1 to 9 or "-" for no reading. "slow" marks tubes whose source reports more slowly than that button's window.
-  const SLOWSET = ['011001110', '000000110', '000000000', '000000000'], MADE = '2026-11-13T06:00:00Z';
+  const SLOWSET = ['000001110', '000000110', '000000000', '000000000'], MADE = '2026-11-13T06:00:00Z';
   const file = (seq, d, slow = SLOWSET, more = {}) => ({ v: 1, seq, made: MADE, poll: 3600, era: 0, ready: false, glow: '', ...more, d, slow });
   const SCEN = {
     demo:  { label: 'Made-up demo data', note: 'These readings are invented to exercise the display. They are not real.',
              file: file(1, ['688377657', '588276656', '477374657', '555555555']) },
-    first: { label: 'Real readings, 13 November 2026 (shown first)', note: 'A copy of the live file from 13 November 2026. All nine tubes have real readings. CYCLO is at 9 because a very strong El Niño is under way.',
-             file: file(2, ['588379778', '578379775', '467376776', '555555555']) },
+    first: { label: 'Real readings, 13 November 2026 (shown first)', note: 'A copy of the live file from 13 November 2026. All nine tubes have real readings. CYCLO is at 9 because a very strong El Niño is under way. OCEAN and ATMOS now read daily figures.',
+             file: file(2, ['688379778', '587379775', '467376776', '555555555'], ['000001110', '000000110', '000000000', '000000000']) },
     calm:  { label: 'Made-up: a calm planet', note: 'Invented. Every system sits at its normal.',
              file: file(3, ['555555555', '555555555', '555555555', '555555555']) },
     wild:  { label: 'Made-up: everything off the scale', note: 'Invented. Every tube is pinned at 1 or 9.',
