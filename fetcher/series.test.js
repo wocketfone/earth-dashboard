@@ -23,4 +23,20 @@ ok(s.baseline([{date:'2000-12-31',value:1},{date:'2001-01-01',value:2},{date:'20
  const h=s.parseHistory('date,year_digits\r\n2026-01-02,123456789\r\njunk\n2026-01-01,5-5-5-5-5\n2026-01-02,999999999\n2026-01-03,12345678\n2026-01-04,1234567890\n2026-01-05,123456780\n\n');
  ok(JSON.stringify(h)===JSON.stringify([{date:'2026-01-01',digits:'5-5-5-5-5'},{date:'2026-01-02',digits:'999999999'}]),'history: keeps good lines, sorts them, later repeat wins, drops short, long and zero lines: '+JSON.stringify(h));
  ok(s.parseHistory('').length===0&&s.parseHistory(undefined).length===0&&s.parseHistory('date,year_digits\n').length===0,'history: empty file is no days')}
+{// leap years. Ice: 29 February must have a normal over twenty years and over ten, and read like its neighbours.
+ const D=s.DAY,iso=t=>new Date(t).toISOString().slice(0,10),mk=(a,b,fn)=>{const o=[];for(let t=Date.parse(a);t<=Date.parse(b);t+=D)o.push({date:iso(t),value:fn(iso(t))});return o};
+ const ice=d=>10+3*Math.cos(2*Math.PI*((Date.parse(d)-Date.UTC(+d.slice(0,4),0,1))/D)/365.25)+((+d.slice(0,4))%2?0.4:-0.4);
+ const rows=mk('2001-01-01','2032-12-31',ice);
+ for(const [label,from,to] of [['twenty years','2001-01-01','2020-12-31'],['ten years','2018-03-01','2028-02-29'],['ten years with two leap days','2021-01-01','2030-12-31']]){const c=s.iceClimatology(rows,from,to);
+  ok(Object.keys(c).length===366,`ice normal over ${label} covers all 366 calendar days: ${Object.keys(c).length}`);ok(c['02-29']&&Math.abs(c['02-29'].mean-(c['02-28'].mean+c['03-01'].mean)/2)<1e-3&&Math.abs(c['02-29'].sd-(c['02-28'].sd+c['03-01'].sd)/2)<1e-3,`ice normal over ${label}: 29 February sits halfway between its neighbours`);
+  const z=s.iceZ(mk('2028-02-26','2028-03-03',ice),c);ok(z.length===7&&z.some(r=>r.date==='2028-02-29'),`ice reading over ${label}: 29 February 2028 gets a reading`);const v=z.map(r=>r.value);ok(Math.max(...v)-Math.min(...v)<0.25,`ice reading over ${label}: no jump across the leap day (${v.map(x=>x.toFixed(2)).join(' ')})`)}
+ // the three windows on and around a leap day
+ const flat=mk('2015-01-01','2028-03-05',d=>(d>='2028-01-01'?2:1));for(const end of ['2028-02-28','2028-02-29','2028-03-01']){const r=flat.filter(x=>x.date<=end);ok(Math.abs(s.windowMean(r,end,1)-2)<1e-9&&Math.abs(s.vsRecentDays(r,1)-1)<1e-9,`daily windows ending ${end} read right`);const y=s.windowMean(r,end,365),inYear=Math.round((Date.parse(end)-Date.parse('2027-12-31'))/D);ok(Math.abs(y-(1+inYear/365))<1e-9,`the 365-day window ending ${end} holds exactly 365 days`)}
+ // the year after a leap day: 28 February 2029 looks back to 28 February of earlier years, including leap ones
+ const byDate=new Map(mk('2015-01-01','2029-03-05',d=>(d.slice(5)==='02-29'?99:1)).map(r=>[r.date,r.value]));ok(Math.abs(s.vsRecentAt(byDate,'2029-02-28',1,10,0))<1e-9,'with no widening, 28 February compares only with earlier 28 Februaries');
+ ok(s.vsRecentAt(byDate,'2028-02-29',1,10,0)!==null,'29 February with no widening still finds earlier years');
+ // monthly figures: February is one month whatever its length, and 2100 is not a leap year
+ const months=[];for(let y=2010;y<=2028;y++)for(let m=1;m<=12;m++)months.push({date:`${y}-${String(m).padStart(2,'0')}-15`,value:y>=2028?2:1});const feb=months.filter(r=>r.date<='2028-02-15');ok(Math.abs(s.vsRecentYears(feb,1)-1)<1e-9&&Math.abs(s.vsRecentYears(feb,3)-(2/3))<1e-9,'monthly comparison in a leap February: '+s.vsRecentYears(feb,3));
+ ok(s.tenYearsBefore('2100-02-28')==='2090-03-01'&&s.tenYearsBefore('2104-02-29')==='2094-03-01'&&s.tenYearsBefore('2110-03-01')==='2100-03-02','ten years back across 2100, which has no leap day');
+ const century=new Map(mk('2088-01-01','2104-03-01',()=>1).map(r=>[r.date,r.value]));ok(s.vsRecentAt(century,'2104-02-29',1)===0&&s.vsRecentAt(century,'2100-03-01',90)===0,'daily comparison across 2100 works')}
 console.log(`series: PASS ${pass}  FAIL ${fail}`);process.exit(fail?1:0);

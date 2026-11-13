@@ -50,6 +50,10 @@ function iceClimatology(rows, from = '2001-01-01', to = '2020-12-31') {
   }
   const out = {};
   for (const key in byKey) if (byKey[key].length >= 20) out[key] = { mean: +mean(byKey[key]).toFixed(4), sd: +sd(byKey[key]).toFixed(4) };
+  // 29 February only has readings from leap years, so on its own it is thin (a quarter of the samples) or, over ten
+  // years, missing. It is set halfway between its neighbours instead, so the leap day reads like the days around it.
+  const a = out['02-28'], b = out['03-01'];
+  if (a && b) out['02-29'] = { mean: +((a.mean + b.mean) / 2).toFixed(4), sd: +((a.sd + b.sd) / 2).toFixed(4) };
   return out;
 }
 // How unusual each day's ice is, in standard deviations for that calendar day.
