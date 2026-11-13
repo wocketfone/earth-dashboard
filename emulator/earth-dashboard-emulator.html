@@ -41,6 +41,15 @@ p{margin:0;max-width:65ch}
 .lamp{width:7px;height:7px;border-radius:50%;background:var(--lamp-off);flex:none}
 .lamp.on{background:var(--lamp-on);box-shadow:0 0 7px var(--lamp-on)}
 .lamp.big{width:11px;height:11px;display:inline-block}
+.lamp.good{background:#2fbf71;box-shadow:0 0 7px #2fbf71}
+.lamp.bad{background:#e5484d;box-shadow:0 0 7px #e5484d}
+.lamp.old{background:#f5a623;box-shadow:0 0 7px #f5a623}
+.lamp.busy{background:var(--lamp-on);animation:pulse .7s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:.25}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.lamp.busy{animation:none}}
+.fetchstate{display:inline-flex;align-items:center;gap:8px}
+input[type=url]{font-family:var(--mono);font-size:12.5px;width:100%;box-sizing:border-box;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:7px 8px}
+input[type=url]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .side button:disabled{opacity:.5;cursor:not-allowed}
 .keys{display:flex;justify-content:center;gap:0;background:var(--stripe);border-radius:999px;padding:6px 10px;align-self:center;flex-wrap:wrap}
 .keys button{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:4px 10px;cursor:pointer;color:var(--inst-fg);font:inherit}
@@ -60,6 +69,7 @@ p{margin:0;max-width:65ch}
 .side{display:flex;flex-direction:column;gap:20px;min-width:0}
 .group{display:flex;flex-direction:column;gap:8px;min-width:0}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select{max-width:100%}
 .side button,select{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
 .side button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .side .go{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:500}
@@ -111,6 +121,17 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
           <button id="lamp">Run the lamp test</button>
         </div>
         <p class="note">Waking runs the cold start with a five-second idle. A button press uses a two-second idle. Holding any of the four buttons for three seconds also runs the lamp test.</p>
+      </div>
+
+      <div class="group">
+        <h2>Live data</h2>
+        <div class="row">
+          <button class="go" id="fetchnow">Fetch live data now</button>
+          <span class="fetchstate" role="status"><i class="lamp big" id="fetchlamp"></i><strong id="fetchword">Not tried yet</strong></span>
+        </div>
+        <p class="note" id="fetchmsg">Gets the file the board will get, from the address below, and runs the board's checks on it.</p>
+        <label for="fetchurl">Address the board fetches from</label>
+        <input id="fetchurl" type="url" spellcheck="false" autocomplete="off">
       </div>
 
       <div class="group">
@@ -352,12 +373,54 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     $('keys').appendChild(b);
   });
   for (const k in SCEN) $('scen').add(new Option(SCEN[k].label, k));
-  const loadScen = () => { $('scen').value = scen; eras = SCEN[scen].eras; era = 0; cur = eras[0]; $('scennote').textContent = SCEN[scen].note; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = ''; };
-  $('scen').onchange = e => { scen = e.target.value; loadScen(); };
+  const loadScen = () => { live = false; $('scen').value = scen; eras = SCEN[scen].eras; era = 0; cur = eras[0]; $('scennote').textContent = SCEN[scen].note; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = ''; };
+  $('scen').add(new Option('Live data from the address above', 'live'));
+  $('scen').onchange = e => { if (e.target.value === 'live') { e.target.value = scen; fetchLive(); return; } scen = e.target.value; loadScen(); };
+
+  // ---------- Live fetch: what the board does on its own every hour, done here on demand ----------
+  // It gets the file for the scale the board is on, runs the same checks, and takes all of it or none of it.
+  const LIVE = 'https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/frame-0.json';
+  $('fetchurl').value = LIVE; $('fetchurl').oninput = () => { live = false; };
+  let live = false, fetching = false, fetched = { state: 'none', word: 'Not tried yet', msg: '' };
+  const setFetch = (state, word, msg) => { fetched = { state, word, msg }; $('fetchlamp').className = 'lamp big ' + state; $('fetchword').textContent = word; $('fetchmsg').textContent = msg; return fetched; };
+  const ago = ms => { const m = Math.round(ms / 60000); return m < 1 ? 'just now' : m < 90 ? `${m} minute${m === 1 ? '' : 's'} ago` : m < 48 * 60 ? `${Math.round(m / 60)} hours ago` : `${Math.round(m / 1440)} days ago`; };
+  const addressFor = e => $('fetchurl').value.trim().replace(/frame-\d+\.json/, `frame-${e}.json`);
+  async function getFrame(url, fetcher, nowMs) {
+    let text;
+    try {
+      const res = await fetcher(url + (url.includes('?') ? '&' : '?') + 't=' + nowMs, { cache: 'no-store' });
+      if (!res.ok) return { why: 'status', status: res.status };
+      text = await res.text();
+    } catch (e) { return { why: 'reach' }; }
+    const r = parseFrame(text);
+    return r.error ? { why: 'checks', error: r.error } : r;
+  }
+  const KEEP = ' The tubes keep the last good frame.';
+  async function fetchLive(fetcher = (u, o) => fetch(u, o), nowMs = Date.now()) {
+    if (fetching) return null;
+    fetching = true; $('fetchnow').disabled = true; setFetch('busy', 'Fetching', '');
+    try {
+      const url = live ? addressFor(era) : $('fetchurl').value.trim();
+      if (!/^https?:\/\//i.test(url)) return setFetch('bad', 'Bad', 'The address has to start with http:// or https://.' + KEEP);
+      const r = await getFrame(url, fetcher, nowMs);
+      if (r.why === 'reach') return setFetch('bad', 'Bad', 'Couldn\'t reach the address. Inside Claude\'s viewer that\'s expected, because pages there aren\'t allowed to call outside addresses. A copy of this emulator opened from GitHub can.' + KEEP);
+      if (r.why === 'status') return setFetch('bad', 'Bad', `The server answered ${r.status}${r.status === 404 ? ', which means there\'s no file at that address' : ''}.` + KEEP);
+      if (r.why === 'checks') return setFetch('bad', 'Bad', 'The file arrived but failed the board\'s checks, so all of it was rejected. ' + r.error + KEEP);
+      const same = live && cur.file.seq === r.file.seq && cur.file.made === r.file.made && cur.file.era === r.file.era;
+      eras = []; era = r.file.era; eras[era] = r; cur = r; live = true; scen = 'live';
+      // If a newer scale is ready, get that file too, so the covered button has somewhere to go.
+      if (r.file.ready) { const nx = await getFrame(addressFor(era + 1), fetcher, nowMs); if (!nx.why && nx.file.era === era + 1) eras[era + 1] = nx; }
+      $('scen').value = 'live'; $('scennote').textContent = 'Live readings, fetched from the address above.'; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = '';
+      const age = nowMs - Date.parse(r.file.made), when = `Frame ${r.file.seq}, made ${ago(age)}.`;
+      if (age > 26 * 3600000) return setFetch('old', 'Old', `${when} The file passed every check, but the fetcher refreshes it at least once a day, so the fetcher has stopped. The tubes show it anyway.`);
+      return setFetch('good', 'Good', `${when} It passed every check. ` + (same ? 'Nothing has changed since the last fetch.' : 'The tubes walk quietly to any new reading.'));
+    } finally { fetching = false; $('fetchnow').disabled = false; }
+  }
+  $('fetchnow').onclick = () => { fetchLive(); };
   $('sendframe').onclick = () => {
     const r = parseFrame($('framebox').value);
     if (r.error) { $('framemsg').textContent = 'Rejected, and the last good frame stays. ' + r.error; return; }
-    eras = [r]; era = 0; cur = r; $('framemsg').textContent = `Accepted frame ${r.file.seq}. The tubes walk quietly to any new reading.`;
+    live = false; eras = [r]; era = 0; cur = r; $('framemsg').textContent = `Accepted frame ${r.file.seq}. The tubes walk quietly to any new reading.`;
   };
   loadScen();
   $('wake').onclick = () => { asleep = false; lamp = null; begin(true); };
@@ -464,7 +527,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   window.__emu = {
     tubes, press, startLamp, SCEN, SLOW, BASE, DT, parseFrame,
     advance(sec) { manual = true; const n = Math.round(sec / DT); for (let i = 0; i < n; i++) { if (i % 20 === 0) tick(); stepAll(); } tick(); paintState(); },
-    pressReset,
+    pressReset, fetchLive, fetched: () => ({ ...fetched, live, era, seq: cur.file.seq, next: !!eras[era + 1], busy: fetching }),
     // Test hook: switch data set at once, with no walk.
     useScen(k) { scen = k; loadScen(); anim = null; lamp = null; for (let i = 0; i < 9; i++) put(i, cur.frame[mode][i]); },
     state: () => ({ t, mode, phase, asleep, scen, STEP, WALK, era, ready: cur.file.ready, glow: cur.file.glow, halo: ctxs[0].canvas.style.filter,

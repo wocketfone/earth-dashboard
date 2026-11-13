@@ -1,4 +1,4 @@
-# Reads every source and publishes public/frame-0.json.
+# Reads every source and publishes public/frame-0.json. If a reset is due, it also builds the next scale (frame-1.json, and so on).
 # Runs every hour at 17 minutes past, and whenever it is started by hand.
 name: Build the frame
 on:

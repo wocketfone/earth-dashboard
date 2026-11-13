@@ -43,6 +43,17 @@ To run one by hand: open the **Actions** tab, pick the job, and press **Run work
 - `data/year-history.csv`: one line a day, used to decide when the scale needs resetting.
 - `emulator/`: two web pages that imitate the tubes. Open them in a browser.
 
+## What happens at a reset?
+
+If the planet moves so far that three or more tubes sit pinned at 1 or 9 for a whole year, the hourly job builds a new scale by itself. Nobody has to run anything.
+
+- A second file appears, `public/frame-1.json`, measured against the ten years ending that day.
+- The first file starts saying `"ready": true`. That lights the lamp by the covered button on the instrument.
+- When someone presses the covered button, the instrument switches to the new file. Until then it carries on as before.
+- Both files keep updating every hour. The new normal is saved in `data/normals-1.json` and never changes.
+
+The full rules are in `docs/mapping-rules.md`.
+
 ## What do I do if it stops?
 
 1. **Open `status/latest.json`.** Each tube says whether its source answered, and why not if it didn't.
@@ -52,11 +63,10 @@ To run one by hand: open the **Actions** tab, pick the job, and press **Run work
 
 When one source fails, the others carry on. That tube keeps its last reading and its lamp lights.
 
-To test changes on your own computer, install Node.js and run the three test files in `fetcher/`, for example `node fetcher/mapping.test.js`.
+To test changes on your own computer, install Node.js and run the four test files in `fetcher/`, for example `node fetcher/mapping.test.js`.
 
 ## What isn't finished?
 
-- **The reset isn't built.** The plan is in `docs/mapping-rules.md`. When tubes have been pinned at 1 or 9 for a year, the job should publish `frame-1.json` on a new scale.
 - **OCEAN uses a monthly source.** A daily one would be better.
 
 ## Who made it?

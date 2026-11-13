@@ -1,23 +1,33 @@
 // The regular job. Reads every source, works out the nine digits for each button, and writes public/frame-0.json.
 // If a source fails, its tube keeps its last reading and its marker lamp lights. Nothing here can make a tube show a guess.
+//
+// It also runs the reset, with no person involved. When three or more counting tubes have sat pinned on the Year button
+// for a year, it works out a new normal (the ten years ending that day), freezes it in data/normals-1.json, and starts
+// publishing public/frame-1.json beside frame-0.json. frame-0.json then says "ready": true, which lights the lamp by the
+// covered button. Every scale ever made keeps being published, so a board on any of them still gets readings.
 const fs = require('fs'), path = require('path');
 const { load, usgsUrl, clock, root } = require('./load.js');
 const M = require('./mapping.js'), S = require('./series.js');
+const { computeNormals, memory } = require('./normals.js');
 
 const ROOT = root();
 const read = f => (fs.existsSync(path.join(ROOT, f)) ? JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8')) : null);
 const STALE_AFTER = { 0: 3, 1: 10, 30: 100, 365: 1000 };           // days without fresh data before a tube counts as stale
 const ageDays = date => (clock() - S.toMs(date)) / S.DAY;
 
+const GLOWS = ['7A5CFF', '3D7BFF', 'C04DFF'];                       // tube-base colour for scales 1, 2, 3, then round again. Scale 0 has none.
+const TRIES = 48;                                                   // runs to wait for a failing source before a reset goes ahead without it
+const files = e => ({ frame: `public/frame-${e}.json`, status: e ? `status/latest-${e}.json` : 'status/latest.json', history: e ? `data/year-history-${e}.csv` : 'data/year-history.csv' });
+const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { recursive: true }); fs.writeFileSync(path.join(ROOT, f), text); };
+
 (async () => {
-  const normals = read('data/normals-0.json');
-  if (!normals) throw new Error('data/normals-0.json is missing. Run the normals job first.');
+  const scales = [];
+  for (let e = 0; ; e++) { const n = read(`data/normals-${e}.json`); if (!n) break; scales.push(n); }
+  if (!scales.length) throw new Error('data/normals-0.json is missing. Run the normals job first.');
   // FRESH=1 forgets the previous digits for one run. Use it after a rule changes, so the deadband doesn't hold a tube
   // on a digit that was set under the old rule.
   const fresh = process.env.FRESH === '1';
-  const prev = read('public/frame-0.json'), prevStatus = read('status/latest.json') || { tubes: {} };
   const now = clock(), today = new Date(now).toISOString().slice(0, 10);
-  const status = { made: new Date(now).toISOString(), tubes: {} };
 
   // Each reader returns { values: [today, 90 days, year], latest: 'YYYY-MM-DD', positions: [...] }.
   const three = (rows, rule) => {
@@ -52,18 +62,25 @@ const ageDays = date => (clock() - S.toMs(date)) / S.DAY;
     },
   };
 
+  // Builds and publishes the file for one scale. ready: whether a newer scale exists.
+  async function publish(normals, ready) {
+  const era = normals.era, at = files(era), tag = `[scale ${era}]`;
+  const prev = read(at.frame), prevStatus = read(at.status) || { tubes: {} };
+  const status = { made: new Date(now).toISOString(), era, tubes: {} };
   const stale = [], cadence = { ...M.CADENCE };
   for (const name of M.ORDER) {
-    const n = normals.tubes[name], last = prevStatus.tubes[name];
+    const n = normals.tubes[name];
+    // A tube carried over from the scale before sits on the same scale there, so its held reading is still right here.
+    const last = prevStatus.tubes[name] || (n && n.carried && era > 0 ? ((read(files(era - 1).status) || { tubes: {} }).tubes[name]) : undefined);
     if (n && !n.error) cadence[name] = n.cadence;
     try {
       if (!n || n.error || !readers[name]) throw new Error(n && n.error ? n.error : 'No reader for this tube.');
       const r = await readers[name](n);
       status.tubes[name] = { ok: true, source: n.source, unit: n.unit, latest: r.latest, ...(r.note ? { about: r.note } : {}), values: r.values, positions: r.positions.map(p => (p === null || !Number.isFinite(p) ? p : +p.toFixed(3))) };
       if (ageDays(r.latest) > STALE_AFTER[n.cadence]) { stale.push(name); status.tubes[name].note = 'The source has not published anything new for a while.'; }
-      console.log('OK  ', name, r.latest, r.values.map(v => (v === null ? 'none' : +v.toPrecision(5))).join(', '));
+      console.log(tag, 'OK  ', name, r.latest, r.values.map(v => (v === null ? 'none' : +v.toPrecision(5))).join(', '));
     } catch (e) {
-      console.log('FAIL', name, e.message);
+      console.log(tag, 'FAIL', name, e.message);
       if (last && last.positions) { status.tubes[name] = { ...last, ok: false, note: 'Holding the last reading. ' + e.message }; stale.push(name); }
       else status.tubes[name] = { ok: false, note: 'No reading. ' + e.message };
     }
@@ -71,8 +88,8 @@ const ageDays = date => (clock() - S.toMs(date)) / S.DAY;
 
   const fix = p => (p === undefined || p === null || Number.isNaN(p) ? null : p);     // minus infinity is a real "nothing happened" reading
   const positions = [0, 1, 2].map(b => M.ORDER.map(name => { const t = status.tubes[name]; return t.positions ? fix(t.positions[b]) : null; }));
-  const draft = M.buildFrame({ seq: 0, made: status.made, positions, previous: prev && !fresh ? prev.d : null, cadence, stale });
-  const changed = !prev || draft.d.join() !== prev.d.join() || draft.slow.join() !== prev.slow.join();
+  const draft = M.buildFrame({ seq: 0, made: status.made, era, ready, glow: normals.glow || '', baseline: normals.memory || undefined, positions, previous: prev && !fresh ? prev.d : null, cadence, stale });
+  const changed = !prev || draft.d.join() !== prev.d.join() || draft.slow.join() !== prev.slow.join() || draft.ready !== prev.ready || draft.glow !== prev.glow;
   const file = { ...draft, seq: prev ? prev.seq + (changed ? 1 : 0) : 1 };
   const error = M.validateFrame(file); if (error) throw new Error('Refusing to publish a bad frame: ' + error);
   M.ORDER.forEach((name, i) => { status.tubes[name].digits = file.d.slice(0, 3).map(row => row[i]).join(''); });
@@ -81,18 +98,43 @@ const ageDays = date => (clock() - S.toMs(date)) / S.DAY;
   // Write only when something changed, or about once a day so the board can see the data is fresh.
   const hoursOld = prev ? (now - Date.parse(prev.made)) / 3600000 : Infinity;
   if (changed || hoursOld > 20) {
-    fs.mkdirSync(path.join(ROOT, 'public'), { recursive: true }); fs.mkdirSync(path.join(ROOT, 'status'), { recursive: true });
-    fs.writeFileSync(path.join(ROOT, 'public/frame-0.json'), JSON.stringify(file) + '\n');
-    fs.writeFileSync(path.join(ROOT, 'status/latest.json'), JSON.stringify(status, null, 1) + '\n');
-    console.log(changed ? 'Published a new frame:' : 'Refreshed the frame:', JSON.stringify(file));
-  } else console.log('Nothing changed. The published frame stands.');
+    save(at.frame, JSON.stringify(file) + '\n'); save(at.status, JSON.stringify(status, null, 1) + '\n');
+    console.log(tag, changed ? 'Published a new frame:' : 'Refreshed the frame:', JSON.stringify(file));
+  } else console.log(tag, 'Nothing changed. The published frame stands.');
 
   // The reset rule needs one line a day holding that day's latest Year digits. This is kept even when the frame didn't change.
-  const hist = path.join(ROOT, 'data/year-history.csv'), want = `${today},${file.d[2]}`;
+  const hist = path.join(ROOT, at.history), want = `${today},${file.d[2]}`;
   const lines = fs.existsSync(hist) ? fs.readFileSync(hist, 'utf8').trim().split('\n') : ['date,year_digits'];
   if (lines[lines.length - 1] !== want) {
     if (lines[lines.length - 1].startsWith(today)) lines.pop();
     lines.push(want);
-    fs.mkdirSync(path.dirname(hist), { recursive: true }); fs.writeFileSync(hist, lines.join('\n') + '\n');
+    save(at.history, lines.join('\n') + '\n');
   }
+  return { status, history: lines.slice(1).map(l => [...l.split(',')[1]].map(c => (c === '-' ? null : +c))) };
+  }
+
+  let newest;
+  for (const n of scales) newest = await publish(n, n.era < scales.length - 1);
+
+  // The reset. Only the newest scale can run out of room, so only its history is checked.
+  const PENDING = 'data/reset-pending.json';
+  if (!M.resetDue(newest.history)) { if (read(PENDING)) fs.unlinkSync(path.join(ROOT, PENDING)); return; }
+  const before = scales[scales.length - 1], era = before.era + 1, t = new Date(today + 'T00:00:00Z');
+  const from = new Date(Date.UTC(t.getUTCFullYear() - 10, t.getUTCMonth(), t.getUTCDate() + 1)).toISOString().slice(0, 10);
+  console.log(`Reset due. Three or more counting tubes have been pinned for a year. Working out scale ${era} from ${from} to ${today}.`);
+  const { out, failed } = await computeNormals({ era, from, to: today, prev: before, log: (...a) => console.log(`[scale ${era}]`, ...a) });
+  // A tube whose normal couldn't be worked out keeps its old one. If its source is alive, that's probably a passing fault,
+  // so wait and try again next run. After two days of trying, go ahead: a dead source must not block the reset for ever.
+  const alive = failed.filter(name => newest.status.tubes[name] && newest.status.tubes[name].ok);
+  const pending = read(PENDING) || { since: today, tries: 0 };
+  if (alive.length && pending.tries + 1 < TRIES) {
+    save(PENDING, JSON.stringify({ ...pending, tries: pending.tries + 1, waitingFor: alive }, null, 1) + '\n');
+    console.log(`Reset put off: no new normal yet for ${alive.join(', ')}. Try ${pending.tries + 1} of ${TRIES}.`); return;
+  }
+  const next = { ...out, since: today, glow: GLOWS[(era - 1) % GLOWS.length], memory: memory(before, out), ...(failed.length ? { carried: failed } : {}) };
+  save(`data/normals-${era}.json`, JSON.stringify(next, null, 1) + '\n');
+  if (read(PENDING)) fs.unlinkSync(path.join(ROOT, PENDING));
+  await publish(before, true);                 // lights the lamp by the covered button
+  await publish(next, false);
+  console.log(`Scale ${era} is live at public/frame-${era}.json.`);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -27,9 +27,9 @@ function vsRecentYears(rows, n, years = 10) {
   return mean(diffs);
 }
 
-// Sea ice. For each calendar day, the usual extent and its spread over the baseline years, pooled over five days.
-function iceClimatology(rows) {
-  const base = baseline(rows), byKey = {};
+// Sea ice. For each calendar day, the usual extent and its spread over the chosen years (2001-2020 unless told otherwise), pooled over five days.
+function iceClimatology(rows, from = '2001-01-01', to = '2020-12-31') {
+  const base = between(rows, from, to), byKey = {};
   for (const r of base) {
     const t = toMs(r.date);
     for (let k = -2; k <= 2; k++) { const key = new Date(t + k * DAY).toISOString().slice(5, 10); (byKey[key] = byKey[key] || []).push(r.value); }

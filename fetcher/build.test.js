@@ -11,19 +11,20 @@ const months = (y0, y1, lastMonth) => { const out = []; for (let y = y0; y <= y1
 
 function fixtures(dir, opt = {}) {
   fs.mkdirSync(dir, { recursive: true }); const w = (id, text) => fs.writeFileSync(path.join(dir, id + '.txt'), text);
-  const temp = ([y]) => (y >= 2026 ? 0.8 : 0.5);                                           // warm 2026, flat before
+  const hot = opt.hot;                                                                     // a world that jumped in 2018 and stayed there
+  const temp = ([y]) => (hot ? (y >= 2018 ? 2.5 : 0.5) : y >= 2026 ? 0.8 : 0.5);             // otherwise: warm 2026, flat before
   w('ocean-ncei', '# Global Ocean\nDate,Anomaly\n' + months(1990, 2026, 10).map(([y, m]) => `${y}${pad(m)},${temp([y])}`).join('\n') + '\n');
   const g = {}; months(1990, 2026, 10).forEach(([y, m]) => { (g[y] = g[y] || Array(12).fill('***'))[m - 1] = temp([y]); });
   w('atmos-gistemp', 'Land-Ocean: Global Means\nYear,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec,J-D\n' + Object.keys(g).map(y => `${y},${g[y].join(',')},***`).join('\n') + '\n');
-  w('chemo-monthly', 'year,month,decimal,average,average_unc,trend,trend_unc\n' + months(1979, 2026, 10).map(([y, m]) => `${y},${m},${y},0,0,${y >= 2026 ? 430 : 390},0`).join('\n') + '\n');
-  w('chemo-daily', 'year,month,day,smoothed,trend\n' + days('2016-01-01', '2026-11-12').map(d => `${+d.slice(0, 4)},${+d.slice(5, 7)},${+d.slice(8)},0,${d >= '2025-11-01' ? 430 : 390}`).join('\n') + '\n');
+  w('chemo-monthly', 'year,month,decimal,average,average_unc,trend,trend_unc\n' + months(1979, 2026, 10).map(([y, m]) => `${y},${m},${y},0,0,${hot ? (y >= 2018 ? 480 : 390) : y >= 2026 ? 430 : 390},0`).join('\n') + '\n');
+  w('chemo-daily', 'year,month,day,smoothed,trend\n' + days('2016-01-01', '2026-11-12').map(d => `${+d.slice(0, 4)},${+d.slice(5, 7)},${+d.slice(8)},0,${hot ? (d >= '2018-01-01' ? 480 : 390) : d >= '2025-11-01' ? 430 : 390}`).join('\n') + '\n');
   const ice = base => 'Year, Month, Day, Extent, Missing, Source\nYYYY, MM, DD, x, x, x\n' + days('1990-01-01', '2026-11-12').map(d => {
     const y = +d.slice(0, 4), doy = (Date.parse(d + 'T00:00:00Z') - Date.UTC(y, 0, 1)) / DAY, season = base + 4 * Math.cos(2 * Math.PI * doy / 365.25);
     return `${y}, ${+d.slice(5, 7)}, ${+d.slice(8)}, ${(y >= 2026 ? season - 1.2 : season + (y % 2 ? 0.5 : -0.5)).toFixed(4)}, 0, x`; }).join('\n') + '\n';
   w('cryo-north', ice(10)); w('cryo-south', ice(12));
   w('solar-silso', days('1990-01-01', '2026-10-31').map(d => `${d.slice(0, 4)};${d.slice(5, 7)};${d.slice(8)};0;${d >= '2025-11-01' ? 100 : 49};1;1;1`).join('\n') + '\n');
   w('solar-eisn', days('2026-11-01', '2026-11-13').map(d => `${d.slice(0, 4)},${d.slice(5, 7)},${d.slice(8)},0,100,1,1,1`).join('\n') + '\n');
-  const owid = 'country,year,iso_code,renewables_share_elec,primary_energy_consumption\nFrance,2024,FRA,99,99\n' + Array.from({ length: 41 }, (_, i) => 1985 + i).map(y => `World,${y},OWID_WRL,${y > 2020 ? 32 : 20},${y > 2020 ? 130000 : 100000}`).join('\n') + '\n';
+  const owid = 'country,year,iso_code,renewables_share_elec,primary_energy_consumption\nFrance,2024,FRA,99,99\n' + Array.from({ length: 41 }, (_, i) => 1985 + i).map(y => `World,${y},OWID_WRL,${y > 2020 ? 32 : 20},${hot ? (y >= 2018 ? 200000 : 100000) : y > 2020 ? 130000 : 100000}`).join('\n') + '\n';
   w('anth-owid', owid); w('palin-owid', owid);
   const nino = { '2026-8': 0.6, '2026-9': 0.6, '2026-10': opt.ninoLatest === undefined ? 1.2 : opt.ninoLatest };
   w('cyclo-nino34', ' YR MON NINO1+2 ANOM NINO3 ANOM NINO4 ANOM NINO3.4 ANOM\n' + months(1982, 2026, 10).map(([y, m]) => `${y} ${m} 20 0 25 0 28 0 26 ${nino[`${y}-${m}`] || 0}`).join('\n') + '\n');
@@ -109,5 +110,66 @@ for (const [label, tube, breakIt] of [['D a source disappears', 'OCEAN', f2 => f
   for (const n of ['CRYO', 'CHEMO', 'SOLAR', 'OCEAN', 'ATMOS', 'CYCLO']) ok(slowCol(g, IDX[n]) === '111', `J ${n}'s lamp is lit on every button: ${slowCol(g, IDX[n])}`);
   ok(slowCol(g, IDX.ANTH) === '110', 'J ANTH is yearly, so it is not stale yet: ' + slowCol(g, IDX.ANTH)); ok(/^[1-9]{3}$/.test(col(g, IDX.CHEMO)), 'J stale tubes keep a reading; they do not go dark');
   ok(col(g, IDX.LITHO) === '111' || col(g, IDX.LITHO)[0] === '1', 'J no earthquakes on record for the day reads 1: ' + col(g, IDX.LITHO)); }
+
+// K to P: the reset. A world that jumped in 2018 pins OCEAN, ATMOS, CHEMO, and ANTH at 9 on the Year button.
+const has = (r2, f2) => fs.existsSync(path.join(r2, f2)), text = (r2, f2) => fs.readFileSync(path.join(r2, f2), 'utf8');
+const hotBox = name => { const r2 = path.join(tmp, name), f2 = path.join(tmp, name + '-fix'); fs.mkdirSync(r2); fixtures(f2, { hot: true }); run('normals.js', r2, f2); run('build.js', r2, f2); return [r2, f2, J(r2, 'public/frame-0.json')]; };
+const pastDays = (n, row) => 'date,year_digits\n' + Array.from({ length: n }, (_, k) => `${iso(Date.parse('2026-11-13T00:00:00Z') - (n - k) * DAY)},${row}`).join('\n') + '\n';
+{ const [r2, f2, f0] = hotBox('k'), year = f0.d[2];
+  ok(['OCEAN', 'ATMOS', 'CHEMO', 'ANTH'].every(n => year[IDX[n]] === '9'), 'K four counting tubes are pinned at 9 on Year: ' + year); ok(f0.ready === false && !has(r2, 'public/frame-1.json'), 'K no reset on day one');
+  fs.writeFileSync(path.join(r2, 'data/year-history.csv'), pastDays(363, year)); let res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z' });
+  ok(res.code === 0 && !has(r2, 'data/normals-1.json') && J(r2, 'public/frame-0.json').ready === false, 'K 364 pinned days is one short: no reset');
+  const dip = year.split('').map((c, k) => (k === IDX.OCEAN || k === IDX.ATMOS ? '8' : c)).join('');      // two of the four dip to 8 for a single day
+  fs.writeFileSync(path.join(r2, 'data/year-history.csv'), pastDays(364, year).split('\n').map((l, k) => (k === 200 ? l.split(',')[0] + ',' + dip : l)).join('\n')); res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:30:00Z' });
+  ok(res.code === 0 && !has(r2, 'data/normals-1.json'), 'K one day off the pin for two tubes leaves only two pinned all year: no reset');
+  fs.writeFileSync(path.join(r2, 'data/year-history.csv'), pastDays(364, year)); res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T14:00:00Z' });
+  ok(res.code === 0 && /Reset due/.test(res.out) && /Scale 1 is live/.test(res.out), 'K 365 pinned days: the reset runs by itself: ' + res.out.slice(-200));
+  const n0 = J(r2, 'data/normals-0.json'), n1 = J(r2, 'data/normals-1.json'), a = J(r2, 'public/frame-0.json'), b = J(r2, 'public/frame-1.json');
+  ok(n1.era === 1 && n1.since === '2026-11-13' && n1.glow === '7A5CFF' && n1.period === '2016-11-14 to 2026-11-13' && !n1.carried, 'K the new scale is described: ' + n1.period);
+  ok(n1.tubes.OCEAN.normal === 2.2667 && n1.tubes.ATMOS.normal === 2.2667, 'K temperature normal is the ten-year average, 2.2667: ' + n1.tubes.OCEAN.normal);
+  ok(n1.tubes.CHEMO.normal === 469.5 && n1.tubes.ANTH.normal === 188889 && n1.tubes.PALIN.normal === 26.67 && n1.tubes.CYCLO.normal === 0, 'K CHEMO 469.5, ANTH 188889, PALIN 26.67, CYCLO 0: ' + [n1.tubes.CHEMO.normal, n1.tubes.ANTH.normal, n1.tubes.PALIN.normal]);
+  ok(['OCEAN', 'ATMOS', 'CHEMO', 'CRYO', 'SOLAR', 'ANTH', 'PALIN', 'CYCLO'].every(n => n1.tubes[n].step === n0.tubes[n].step) && n1.tubes.OCEAN.recentStep === 0.15 && [1, 90, 365].every(w => n1.tubes.LITHO.windows[w].step === n0.tubes.LITHO.windows[w].step), 'K every step is unchanged');
+  ok(n1.tubes.CRYO.clim.north['07-01'].sd === n0.tubes.CRYO.clim.north['07-01'].sd && n1.tubes.CRYO.clim.north['07-01'].mean !== n0.tubes.CRYO.clim.north['07-01'].mean, 'K ice: the usual extent moves, the spread stays');
+  const mem = Object.fromEntries(M.ORDER.map((n, i) => [n, n1.memory[i]]));
+  ok(mem.OCEAN === 1 && mem.ATMOS === 1 && mem.CHEMO === 2 && mem.ANTH === 1 && mem.PALIN === 4 && mem.CYCLO === 5 && mem.SOLAR === 5 && mem.CRYO === 5 && mem.LITHO >= 1 && mem.LITHO <= 9, 'K button 4 shows the old normal on the new scale: ' + n1.memory.join(''));
+  ok(a.ready === true && a.era === 0 && a.glow === '' && eq(a.d, f0.d) && a.d[3] === '555555555' && a.seq === f0.seq + 1 && M.validateFrame(a) === null, 'K frame-0 keeps its readings and lights the lamp');
+  ok(b.era === 1 && b.ready === false && b.glow === '7A5CFF' && b.seq === 1 && M.validateFrame(b) === null && b.d[3] === n1.memory.join(''), 'K frame-1 is a valid file for the new scale: ' + JSON.stringify(b));
+  ok(['OCEAN', 'ATMOS', 'CHEMO', 'ANTH', 'PALIN'].every(n => b.d[2][IDX[n]] === '6'), 'K on the new scale the pinned tubes read 6 on Year: ' + b.d[2]);
+  ok(b.d[0][IDX.OCEAN] === a.d[0][IDX.OCEAN] && b.d[1][IDX.ATMOS] === a.d[1][IDX.ATMOS] && b.d[0][IDX.CYCLO] === a.d[0][IDX.CYCLO], 'K the last-ten-years question and CYCLO read the same on both scales');
+  ok(eq(b.slow, a.slow), 'K marker lamps are the same on both'); ok(text(r2, 'data/year-history-1.csv') === `date,year_digits\n2026-11-13,${b.d[2]}\n` && J(r2, 'status/latest-1.json').era === 1, 'K the new scale has its own history and status');
+  ok(text(r2, 'data/year-history.csv').trim().split('\n').length === 366, 'K the old history carries on');
+  // frozen: later runs, even with different data, never touch the saved normal
+  const frozen = text(r2, 'data/normals-1.json'), b1 = text(r2, 'public/frame-1.json');
+  res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T15:00:00Z' }); ok(res.code === 0 && text(r2, 'data/normals-1.json') === frozen && text(r2, 'public/frame-1.json') === b1 && !has(r2, 'data/normals-2.json'), 'K an hour later nothing moves and no second reset starts');
+  fixtures(f2); res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-14T15:00:00Z' }); ok(res.code === 0 && text(r2, 'data/normals-1.json') === frozen, 'K the new normal is frozen even when the sources change');
+  ok(J(r2, 'public/frame-0.json').ready === true && J(r2, 'public/frame-1.json').era === 1 && !has(r2, 'data/normals-2.json'), 'K both files keep publishing, and the lamp stays lit on the old one');
+  // N: years later the new scale runs out of room too
+  const n1b = J(r2, 'data/normals-1.json'); for (const n of ['OCEAN', 'ATMOS', 'CHEMO']) n1b.tubes[n].normal -= n1b.tubes[n].step * 20; fs.writeFileSync(path.join(r2, 'data/normals-1.json'), JSON.stringify(n1b));
+  fixtures(f2, { hot: true }); run('build.js', r2, f2, { EARTH_NOW: '2026-11-14T16:00:00Z', FRESH: '1' }); const y1 = J(r2, 'public/frame-1.json').d[2];
+  fs.writeFileSync(path.join(r2, 'data/year-history-1.csv'), 'date,year_digits\n' + Array.from({ length: 364 }, (_, k) => `${iso(Date.parse('2026-11-14T00:00:00Z') - (364 - k) * DAY)},${y1}`).join('\n') + '\n');
+  res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-14T17:00:00Z' }); const c = has(r2, 'public/frame-2.json') ? J(r2, 'public/frame-2.json') : {};
+  ok(res.code === 0 && c.era === 2 && c.glow === '3D7BFF' && c.ready === false && M.validateFrame(c) === null, 'N a second reset makes frame-2 with the next colour: ' + res.out.slice(-150));
+  ok(J(r2, 'public/frame-0.json').ready === true && J(r2, 'public/frame-1.json').ready === true && J(r2, 'public/frame-1.json').glow === '7A5CFF', 'N the lamp is lit on both older scales, so a board on either can step forward'); }
+// L: a source that is alive but can't give a normal puts the reset off, then it goes ahead after two days of trying
+{ const [r2, f2, f0] = hotBox('l'); fs.writeFileSync(path.join(r2, 'data/year-history.csv'), pastDays(364, f0.d[2])); fs.unlinkSync(path.join(f2, 'chemo-monthly.txt'));
+  let res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z' }); ok(res.code === 0 && /Reset put off/.test(res.out) && !has(r2, 'data/normals-1.json') && J(r2, 'public/frame-0.json').ready === false, 'L the reset waits: ' + res.out.slice(-120));
+  ok(J(r2, 'data/reset-pending.json').tries === 1 && eq(J(r2, 'data/reset-pending.json').waitingFor, ['CHEMO']), 'L and says what it is waiting for');
+  res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T14:00:00Z' }); ok(J(r2, 'data/reset-pending.json').tries === 2 && !has(r2, 'data/normals-1.json'), 'L it tries again on the next run');
+  fs.writeFileSync(path.join(r2, 'data/reset-pending.json'), JSON.stringify({ since: '2026-11-13', tries: 47 })); res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T15:00:00Z' }); const n0 = J(r2, 'data/normals-0.json'), n1 = has(r2, 'data/normals-1.json') ? J(r2, 'data/normals-1.json') : { tubes: { CHEMO: {} }, memory: [] };
+  ok(res.code === 0 && eq(n1.carried, ['CHEMO']) && n1.tubes.CHEMO.carried === true && n1.tubes.CHEMO.normal === n0.tubes.CHEMO.normal && n1.memory[IDX.CHEMO] === 5, 'L after 48 tries it goes ahead, and CHEMO keeps its old normal');
+  ok(!has(r2, 'data/reset-pending.json') && J(r2, 'public/frame-1.json').d[2][IDX.CHEMO] === '9' && J(r2, 'public/frame-1.json').d[2][IDX.OCEAN] === '6', 'L the waiting note is cleared; CHEMO still reads 9, OCEAN 6'); }
+// M: a source that is already dead doesn't hold the reset up at all
+{ const [r2, f2, f0] = hotBox('m'); fs.writeFileSync(path.join(r2, 'data/year-history.csv'), pastDays(364, f0.d[2])); fs.unlinkSync(path.join(f2, 'palin-owid.txt'));
+  const res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z' }), n1 = has(r2, 'data/normals-1.json') ? J(r2, 'data/normals-1.json') : { tubes: { PALIN: {} } }, b = J(r2, 'public/frame-1.json');
+  ok(res.code === 0 && eq(n1.carried, ['PALIN']) && n1.tubes.PALIN.carried === true, 'M the reset goes ahead at once with PALIN carried over'); ok(b.d[2][IDX.PALIN] === f0.d[2][IDX.PALIN] && b.slow[2][IDX.PALIN] === '1', 'M PALIN holds its last reading on the new scale, lamp lit'); }
+// P: the pins end before the year is up, so the waiting note is cleared and nothing resets
+{ const [r2, f2, f0] = hotBox('p'); fs.writeFileSync(path.join(r2, 'data/reset-pending.json'), '{"since":"2026-11-01","tries":3}'); fs.writeFileSync(path.join(r2, 'data/year-history.csv'), pastDays(364, f0.d[2]));
+  fixtures(f2); const res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z', FRESH: '1' }); ok(res.code === 0 && !has(r2, 'data/reset-pending.json') && !has(r2, 'data/normals-1.json'), 'P today is no longer pinned: no reset, note cleared'); }
+// Q: gaps. Days the job didn't run don't break a year of pins, but too few readings can't trigger one.
+{ const [r2, f2, f0] = hotBox('q'), gap = f0.d[2].split('').map((c, i) => (M.RULES[M.ORDER[i]].counts ? '-' : c)).join('');
+  fs.writeFileSync(path.join(r2, 'data/year-history.csv'), pastDays(364, f0.d[2]).split('\n').map((l, k) => (k > 0 && k <= 60 ? l.split(',')[0] + ',' + gap : l)).join('\n'));
+  let res = run('build.js', r2, f2, { EARTH_NOW: '2026-11-13T13:00:00Z' }); ok(has(r2, 'data/normals-1.json'), 'Q sixty days with no reading do not break the run');
+  const [r3, f3, g0] = hotBox('q2'); fs.writeFileSync(path.join(r3, 'data/year-history.csv'), pastDays(364, g0.d[2]).split('\n').map((l, k) => (k > 0 && k <= 70 ? l.split(',')[0] + ',' + gap : l)).join('\n'));
+  res = run('build.js', r3, f3, { EARTH_NOW: '2026-11-13T13:00:00Z' }); ok(!has(r3, 'data/normals-1.json'), 'Q seventy days with no reading leave too few to be sure: no reset'); }
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`build: PASS ${pass}  FAIL ${fail}`); process.exit(fail ? 1 : 0);
