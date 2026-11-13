@@ -11,7 +11,10 @@ const M = require('./mapping.js'), S = require('./series.js');
 const { computeNormals, memory } = require('./normals.js');
 
 const ROOT = root();
+// Normals are read strictly: a damaged one stops the job, loudly, because guessing a scale would be worse than pausing.
 const read = f => (fs.existsSync(path.join(ROOT, f)) ? JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8')) : null);
+// Everything else the job wrote for itself is read gently: a damaged file counts as missing and is simply written again.
+const readSoft = f => { try { return read(f); } catch (e) { console.log(`${f} is damaged and will be rebuilt: ${e.message}`); return null; } };
 const STALE_AFTER = { 0: 3, 1: 10, 30: 100, 365: 1000 };           // days without fresh data before a tube counts as stale
 const ageDays = date => (clock() - S.toMs(date)) / S.DAY;
 
@@ -22,7 +25,11 @@ const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { rec
 
 (async () => {
   const scales = [];
-  for (let e = 0; ; e++) { const n = read(`data/normals-${e}.json`); if (!n) break; scales.push(n); }
+  for (let e = 0; ; e++) {
+    const n = read(`data/normals-${e}.json`); if (!n) break;
+    if (!n.tubes || typeof n.tubes !== 'object' || (n.era || 0) !== e) throw new Error(`data/normals-${e}.json doesn't describe scale ${e}. Restore it from the repository's history.`);
+    scales.push({ ...n, era: e });
+  }
   if (!scales.length) throw new Error('data/normals-0.json is missing. Run the normals job first.');
   // FRESH=1 forgets the previous digits for one run. Use it after a rule changes, so the deadband doesn't hold a tube
   // on a digit that was set under the old rule.
@@ -65,13 +72,20 @@ const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { rec
   // Builds and publishes the file for one scale. ready: whether a newer scale exists.
   async function publish(normals, ready) {
   const era = normals.era, at = files(era), tag = `[scale ${era}]`;
-  const prev = read(at.frame), prevStatus = read(at.status) || { tubes: {} };
+  const prevStatus = readSoft(at.status) || { tubes: {} };
+  let prev = readSoft(at.frame), lost = false;
+  if (prev && M.validateFrame(prev)) { console.log(tag, 'The published frame fails its own checks and will be rebuilt.'); prev = null; }
+  // The status file keeps a copy of the last frame. If the published one is lost or damaged, carry on from that copy,
+  // so the tubes keep the digits they were holding.
+  if (!prev && fs.existsSync(path.join(ROOT, at.status))) { lost = true; if (prevStatus.frame && !M.validateFrame(prevStatus.frame)) prev = prevStatus.frame; }
+  // The frame number must never go backwards, even if the published file was lost. The status file remembers it too.
+  const lastSeq = Math.max(prev ? prev.seq : 0, prevStatus.frame && Number.isInteger(prevStatus.frame.seq) ? prevStatus.frame.seq : 0);
   const status = { made: new Date(now).toISOString(), era, tubes: {} };
   const stale = [], cadence = { ...M.CADENCE };
   for (const name of M.ORDER) {
     const n = normals.tubes[name];
     // A tube carried over from the scale before sits on the same scale there, so its held reading is still right here.
-    const last = prevStatus.tubes[name] || (n && n.carried && era > 0 ? ((read(files(era - 1).status) || { tubes: {} }).tubes[name]) : undefined);
+    const last = prevStatus.tubes[name] || (n && n.carried && era > 0 ? ((readSoft(files(era - 1).status) || { tubes: {} }).tubes[name]) : undefined);
     if (n && !n.error) cadence[name] = n.cadence;
     try {
       if (!n || n.error || !readers[name]) throw new Error(n && n.error ? n.error : 'No reader for this tube.');
@@ -89,28 +103,25 @@ const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { rec
   const fix = p => (p === undefined || p === null || Number.isNaN(p) ? null : p);     // minus infinity is a real "nothing happened" reading
   const positions = [0, 1, 2].map(b => M.ORDER.map(name => { const t = status.tubes[name]; return t.positions ? fix(t.positions[b]) : null; }));
   const draft = M.buildFrame({ seq: 0, made: status.made, era, ready, glow: normals.glow || '', baseline: normals.memory || undefined, positions, previous: prev && !fresh ? prev.d : null, cadence, stale });
-  const changed = !prev || draft.d.join() !== prev.d.join() || draft.slow.join() !== prev.slow.join() || draft.ready !== prev.ready || draft.glow !== prev.glow;
-  const file = { ...draft, seq: prev ? prev.seq + (changed ? 1 : 0) : 1 };
+  const changed = lost || !prev || draft.d.join() !== prev.d.join() || draft.slow.join() !== prev.slow.join() || draft.ready !== prev.ready || draft.glow !== prev.glow;
+  const file = { ...draft, seq: lastSeq + (changed ? 1 : 0) };
   const error = M.validateFrame(file); if (error) throw new Error('Refusing to publish a bad frame: ' + error);
   M.ORDER.forEach((name, i) => { status.tubes[name].digits = file.d.slice(0, 3).map(row => row[i]).join(''); });
   status.frame = file;
 
   // Write only when something changed, or about once a day so the board can see the data is fresh.
   const hoursOld = prev ? (now - Date.parse(prev.made)) / 3600000 : Infinity;
-  if (changed || hoursOld > 20) {
+  if (changed || hoursOld > 20 || !prevStatus.made) {          // a lost status file is written again straight away
     save(at.frame, JSON.stringify(file) + '\n'); save(at.status, JSON.stringify(status, null, 1) + '\n');
     console.log(tag, changed ? 'Published a new frame:' : 'Refreshed the frame:', JSON.stringify(file));
   } else console.log(tag, 'Nothing changed. The published frame stands.');
 
   // The reset rule needs one line a day holding that day's latest Year digits. This is kept even when the frame didn't change.
-  const hist = path.join(ROOT, at.history), want = `${today},${file.d[2]}`;
-  const lines = fs.existsSync(hist) ? fs.readFileSync(hist, 'utf8').trim().split('\n') : ['date,year_digits'];
-  if (lines[lines.length - 1] !== want) {
-    if (lines[lines.length - 1].startsWith(today)) lines.pop();
-    lines.push(want);
-    save(at.history, lines.join('\n') + '\n');
-  }
-  return { status, history: lines.slice(1).map(l => [...l.split(',')[1]].map(c => (c === '-' ? null : +c))) };
+  const hist = path.join(ROOT, at.history), was = fs.existsSync(hist) ? fs.readFileSync(hist, 'utf8') : '';
+  const days = S.parseHistory(was).filter(d => d.date < today).concat({ date: today, digits: file.d[2] });
+  const text = 'date,year_digits\n' + days.map(d => `${d.date},${d.digits}`).join('\n') + '\n';
+  if (text !== was) save(at.history, text);
+  return { status, history: days.map(d => [...d.digits].map(c => (c === '-' ? null : +c))) };
   }
 
   let newest;
@@ -118,22 +129,21 @@ const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { rec
 
   // The reset. Only the newest scale can run out of room, so only its history is checked.
   const PENDING = 'data/reset-pending.json';
-  if (!M.resetDue(newest.history)) { if (read(PENDING)) fs.unlinkSync(path.join(ROOT, PENDING)); return; }
-  const before = scales[scales.length - 1], era = before.era + 1, t = new Date(today + 'T00:00:00Z');
-  const from = new Date(Date.UTC(t.getUTCFullYear() - 10, t.getUTCMonth(), t.getUTCDate() + 1)).toISOString().slice(0, 10);
+  if (!M.resetDue(newest.history)) { if (fs.existsSync(path.join(ROOT, PENDING))) fs.unlinkSync(path.join(ROOT, PENDING)); return; }
+  const before = scales[scales.length - 1], era = before.era + 1, from = S.tenYearsBefore(today);
   console.log(`Reset due. Three or more counting tubes have been pinned for a year. Working out scale ${era} from ${from} to ${today}.`);
   const { out, failed } = await computeNormals({ era, from, to: today, prev: before, log: (...a) => console.log(`[scale ${era}]`, ...a) });
   // A tube whose normal couldn't be worked out keeps its old one. If its source is alive, that's probably a passing fault,
   // so wait and try again next run. After two days of trying, go ahead: a dead source must not block the reset for ever.
   const alive = failed.filter(name => newest.status.tubes[name] && newest.status.tubes[name].ok);
-  const pending = read(PENDING) || { since: today, tries: 0 };
+  const soft = readSoft(PENDING), pending = soft && Number.isInteger(soft.tries) ? soft : { since: today, tries: 0 };
   if (alive.length && pending.tries + 1 < TRIES) {
     save(PENDING, JSON.stringify({ ...pending, tries: pending.tries + 1, waitingFor: alive }, null, 1) + '\n');
     console.log(`Reset put off: no new normal yet for ${alive.join(', ')}. Try ${pending.tries + 1} of ${TRIES}.`); return;
   }
   const next = { ...out, since: today, glow: GLOWS[(era - 1) % GLOWS.length], memory: memory(before, out), ...(failed.length ? { carried: failed } : {}) };
   save(`data/normals-${era}.json`, JSON.stringify(next, null, 1) + '\n');
-  if (read(PENDING)) fs.unlinkSync(path.join(ROOT, PENDING));
+  if (fs.existsSync(path.join(ROOT, PENDING))) fs.unlinkSync(path.join(ROOT, PENDING));
   await publish(before, true);                 // lights the lamp by the covered button
   await publish(next, false);
   console.log(`Scale ${era} is live at public/frame-${era}.json.`);

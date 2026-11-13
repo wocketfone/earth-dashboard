@@ -18,4 +18,9 @@ ok(s.baseline([{date:'2000-12-31',value:1},{date:'2001-01-01',value:2},{date:'20
  ok(near(s.vsRecentYears(mrows,1),0.02*5.5+0.3,1e-9),'vs last ten years, one month: '+s.vsRecentYears(mrows,1));ok(near(s.vsRecentYears(mrows,3),0.02*5.5+0.3,1e-9),'vs last ten years, three months');
  ok(s.vsRecentYears(mrows.filter(r=>r.date>='2020'),1)===null,'too little history gives no reading');ok(s.vsRecentYears([],1)===null,'no data gives no reading');
  const gappy=mrows.filter(r=>!(r.date.startsWith('2019')||r.date.startsWith('2021')));ok(s.vsRecentYears(gappy,1)!==null,'two missing years out of ten is still enough');ok(s.vsRecentYears(mrows.filter(r=>!/^201[6-9]/.test(r.date)),1)===null,'four missing years is not')}
+{for(const [day,want] of [['2026-11-13','2016-11-14'],['2028-02-29','2018-03-01'],['2028-02-28','2018-03-01'],['2030-03-01','2020-03-02'],['2027-01-01','2017-01-02'],['2030-12-31','2021-01-01'],['2034-02-28','2024-02-29']])ok(s.tenYearsBefore(day)===want,`ten years before ${day} starts ${want}, got ${s.tenYearsBefore(day)}`);
+ for(let y=2026;y<2060;y++)for(const md of ['01-01','02-28','03-01','06-30','12-31']){const from=s.tenYearsBefore(`${y}-${md}`),n=Math.round((s.toMs(`${y}-${md}`)-s.toMs(from))/s.DAY)+1;ok(n===3652||n===3653,`ten years ending ${y}-${md} hold ${n} days`)}
+ const h=s.parseHistory('date,year_digits\r\n2026-01-02,123456789\r\njunk\n2026-01-01,5-5-5-5-5\n2026-01-02,999999999\n2026-01-03,12345678\n2026-01-04,1234567890\n2026-01-05,123456780\n\n');
+ ok(JSON.stringify(h)===JSON.stringify([{date:'2026-01-01',digits:'5-5-5-5-5'},{date:'2026-01-02',digits:'999999999'}]),'history: keeps good lines, sorts them, later repeat wins, drops short, long and zero lines: '+JSON.stringify(h));
+ ok(s.parseHistory('').length===0&&s.parseHistory(undefined).length===0&&s.parseHistory('date,year_digits\n').length===0,'history: empty file is no days')}
 console.log(`series: PASS ${pass}  FAIL ${fail}`);process.exit(fail?1:0);

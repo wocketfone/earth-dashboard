@@ -65,4 +65,19 @@ function rollingSums(daily, days) {
 // Energy released in the last `hours` hours before `nowMs`.
 function energySince(events, nowMs, hours) { return events.filter(e => e.time > nowMs - hours * 3600000 && e.time <= nowMs).reduce((x, e) => x + e.value, 0); }
 
-module.exports = { DAY, toMs, mean, sd, windowMean, vsRecentYears, between, baseline, iceClimatology, iceZ, pairMean, dailySums, rollingSums, energySince };
+// The first day of the ten years that end on `today`. The day after the same date ten years back.
+function tenYearsBefore(today) {
+  const t = new Date(today + 'T00:00:00Z'), y = t.getUTCFullYear() - 10, m = t.getUTCMonth();
+  let same = new Date(Date.UTC(y, m, t.getUTCDate()));                          // the same date ten years back
+  if (same.getUTCMonth() !== m) same = new Date(Date.UTC(y, m + 1, 0));         // 29 February with no match: use the 28th
+  return new Date(same.getTime() + DAY).toISOString().slice(0, 10);
+}
+// Reads the one-line-a-day history. A damaged line is skipped, and if a date appears twice the later line wins,
+// so a bad file can neither stop the job nor make a year look fuller than it is.
+function parseHistory(text) {
+  const byDate = new Map();
+  for (const raw of String(text || '').split('\n')) { const m = /^(\d{4}-\d{2}-\d{2}),([1-9-]{9})$/.exec(raw.trim()); if (m) byDate.set(m[1], m[2]); }
+  return [...byDate.keys()].sort().map(date => ({ date, digits: byDate.get(date) }));
+}
+
+module.exports = { tenYearsBefore, parseHistory,  DAY, toMs, mean, sd, windowMean, vsRecentYears, between, baseline, iceClimatology, iceZ, pairMean, dailySums, rollingSums, energySince };

@@ -26,7 +26,7 @@ async function computeNormals({ era = 0, from = '2001-01-01', to = '2020-12-31',
     }
   };
   const span = rows => S.between(rows, from, to);
-  // How much of the period a source must cover. A reset allows for sources that publish a year or so late.
+  // How much of the period a source must cover. A reset allows for sources that publish late: yearly ones can run two or three years behind.
   const need = (rows, perYear, what, share = first ? 0.958 : 0.9) => { const n = Math.floor(years * perYear * share);
     if (rows.length < n) throw new Error(`only ${rows.length} ${what} in the period, expected at least ${n}`); return rows; };
   const meanOf = (rows, places = 4) => +S.mean(rows.map(r => r.value)).toFixed(places);
@@ -48,7 +48,7 @@ async function computeNormals({ era = 0, from = '2001-01-01', to = '2020-12-31',
     return { source: 'cryo-north + cryo-south', transform: 'linear', normal: 0, step: kept('CRYO', 'step', 0.75), cadence: 1, unit: 'standard deviations', clim }; });
   await tube('SOLAR', async () => { const b = need(span(await load('solar-silso')), 365.25, 'days');
     return { source: 'solar-silso + solar-eisn', transform: 'sqrt', normal: meanOf(b), step: kept('SOLAR', 'step', 1.5), cadence: 1, unit: 'sunspot number', days: b.length }; });
-  await tube('ANTH', async () => { const b = need(span(await load('anth-owid')), 1, 'years', first ? 1 : 0.8); const normal = Math.round(S.mean(b.map(r => r.value)));
+  await tube('ANTH', async () => { const b = need(span(await load('anth-owid')), 1, 'years', first ? 1 : 0.6); const normal = Math.round(S.mean(b.map(r => r.value)));
     return { source: 'anth-owid', transform: 'linear', normal, step: kept('ANTH', 'step', Math.round(normal * 0.15)), cadence: 365, unit: 'TWh a year', years: b.length }; });
   await tube('LITHO', async () => {
     let events = [];
@@ -69,7 +69,7 @@ async function computeNormals({ era = 0, from = '2001-01-01', to = '2020-12-31',
     return { source: 'litho-usgs', transform: 'log10', windows, cadence: 0, unit: 'joules', earthquakes: events.length }; });
   // The Pacific cycle is published as a departure from its own normal, so 0 is neutral on every scale. Half a degree is the official step between strengths.
   out.tubes.CYCLO = { source: 'cyclo-nino34', transform: 'linear', normal: 0, step: 0.5, wholeSteps: true, cadence: 30, unit: 'degrees C' };
-  await tube('PALIN', async () => { const rows = await load('palin-owid'), b = need(span(rows), 1, 'years', first ? 1 : 0.8); const normal = +S.mean(b.map(r => r.value)).toFixed(2);
+  await tube('PALIN', async () => { const rows = await load('palin-owid'), b = need(span(rows), 1, 'years', first ? 1 : 0.6); const normal = +S.mean(b.map(r => r.value)).toFixed(2);
     return { source: 'palin-owid', transform: 'linear', normal, step: kept('PALIN', 'step', PALIN_STEP), cadence: 365, unit: 'percent of electricity', years: b.length, latest: rows[rows.length - 1].value }; });
   return { out, failed };
 }
