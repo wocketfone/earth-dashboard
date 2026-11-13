@@ -3,6 +3,11 @@
 name: Build the frame
 on:
   workflow_dispatch:
+    inputs:
+      fresh:
+        description: 'Forget the previous digits for this run (use after a rule change)'
+        type: boolean
+        default: false
   schedule:
     - cron: '17 * * * *'
 permissions:
@@ -21,6 +26,8 @@ jobs:
       - run: node fetcher/series.test.js
       - run: node fetcher/sources.test.js
       - run: node fetcher/build.js
+        env:
+          FRESH: ${{ inputs.fresh && '1' || '' }}
       - name: Save the result
         run: |
           git config user.name "earth-dashboard bot"

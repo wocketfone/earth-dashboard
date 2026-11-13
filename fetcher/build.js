@@ -12,6 +12,9 @@ const ageDays = date => (Date.now() - S.toMs(date)) / S.DAY;
 (async () => {
   const normals = read('data/normals-0.json');
   if (!normals) throw new Error('data/normals-0.json is missing. Run the normals job first.');
+  // FRESH=1 forgets the previous digits for one run. Use it after a rule changes, so the deadband doesn't hold a tube
+  // on a digit that was set under the old rule.
+  const fresh = process.env.FRESH === '1';
   const prev = read('public/frame-0.json'), prevStatus = read('status/latest.json') || { tubes: {} };
   const now = Date.now(), today = new Date(now).toISOString().slice(0, 10);
   const status = { made: new Date(now).toISOString(), tubes: {} };
@@ -68,7 +71,7 @@ const ageDays = date => (Date.now() - S.toMs(date)) / S.DAY;
 
   const fix = p => (p === undefined || p === null || Number.isNaN(p) ? null : p);     // minus infinity is a real "nothing happened" reading
   const positions = [0, 1, 2].map(b => M.ORDER.map(name => { const t = status.tubes[name]; return t.positions ? fix(t.positions[b]) : null; }));
-  const draft = M.buildFrame({ seq: 0, made: status.made, positions, previous: prev ? prev.d : null, cadence, stale });
+  const draft = M.buildFrame({ seq: 0, made: status.made, positions, previous: prev && !fresh ? prev.d : null, cadence, stale });
   const changed = !prev || draft.d.join() !== prev.d.join() || draft.slow.join() !== prev.slow.join();
   const file = { ...draft, seq: prev ? prev.seq + (changed ? 1 : 0) : 1 };
   const error = M.validateFrame(file); if (error) throw new Error('Refusing to publish a bad frame: ' + error);
