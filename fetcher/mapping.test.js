@@ -22,8 +22,8 @@ ok(m.digit(m.position(-1.87,R.CRYO))===3,'CRYO 3');ok(m.digit(m.position(-1.87,R
 ok(m.digit(m.position(0,R.SOLAR))===1,'spotless sun reads 1');ok(m.digit(m.position(56.9,R.SOLAR))===5,'average sun reads 5');ok(m.digit(m.position(124,R.SOLAR))===7,'today 124 reads 7');ok(m.digit(m.position(250,R.SOLAR))===9,'250 reads 9');
 {const seen=new Set();for(let s=0;s<=300;s++)seen.add(m.digit(m.position(s,R.SOLAR)));ok(seen.size===9,'SOLAR can show all nine digits: '+[...seen].sort())}
 {let prev=0,mono=true;for(let s=0;s<=300;s++){const d=m.digit(m.position(s,R.SOLAR));if(d<prev)mono=false;prev=d}ok(mono,'SOLAR never goes down as spots go up')}
-// TECH: each step is x1.25
-{const r={...R.TECH,normal:500};ok(m.digit(m.position(500,r))===5&&m.digit(m.position(625,r))===6&&m.digit(m.position(1000,r))===8&&m.digit(m.position(400,r))===4,'TECH log steps')}
+// CYCLO: digits follow the official El Nino strengths
+{const C=R.CYCLO,g=v=>m.digit(m.position(v,C));ok(g(0)===5&&g(0.3)===5&&g(0.49)===5&&g(0.5)===6&&g(0.99)===6&&g(1.0)===7&&g(1.49)===7&&g(1.5)===8&&g(1.99)===8&&g(2.0)===9&&g(3.2)===9&&g(-0.49)===5,'CYCLO El Nino: neutral 5, weak 6, moderate 7, strong 8, very strong 9');ok(g(-0.5)===4&&g(-1.0)===3&&g(-1.5)===2&&g(-2.1)===1,'CYCLO La Nina mirrors it: '+[g(-0.5),g(-1),g(-1.5),g(-2.1)]);ok(!R.CYCLO.counts&&!R.PALIN.counts&&!R.SOLAR.counts&&!R.LITHO.counts&&R.OCEAN.counts&&R.ATMOS.counts&&R.CRYO.counts&&R.CHEMO.counts&&R.ANTH.counts,'which tubes count toward a reset');ok(m.digit(m.position(0.52,C),5)===5&&m.digit(m.position(0.6,C),5)===6&&m.digit(m.position(0.45,C),6)===6&&m.digit(m.position(0.4,C),6)===5,'CYCLO still has a deadband at each threshold')}
 // steady rule: like-with-like windows
 {const days=[];let s=7;for(let i=0;i<7300;i++){s=(s*16807)%2147483647;const u=s/2147483647;days.push(10**(12+2*u))}const r=m.steadyRule(days,'log10');
  ok(Math.abs(Math.log10(r.normal)-13)<0.05,'steady normal is the median');ok(Math.abs(r.step-0.3)<0.01,'steady step spans the middle 90% over six steps: '+r.step.toFixed(3));
@@ -49,7 +49,7 @@ ok(m.digit(m.position(0,{transform:'log10',normal:1e13,step:0.3}))===1,'zero ene
 // frame builder reproduces the first-pass file exactly
 {const P=(v,r)=>m.position(v,r),lin=(n,s)=>({transform:'linear',normal:n,step:s}),o=lin(0.54,0.2),a=lin(0.71,0.2),S=m.RULES.SOLAR,C=m.RULES.CHEMO;
  const pos=[[null,P(1.10,o),P(1.33,a),-1.87/0.75,P(426.1,C),null,null,0,P(124,S)],[-0.27,P(1.067,o),P(1.277,a),null,P(426.1,C),null,null,0,null],[-0.87,P(0.91,o),P(1.151,a),null,P(426.1,C),null,null,0,P(123.2,S)]];
- const f=m.buildFrame({seq:2,made:'2026-11-13T06:00:00Z',positions:pos});ok(eq(f.d,['-8837--57','588-7--5-','477-7--57','555555555']),'builder digits match the first-pass file: '+f.d);ok(eq(f.slow,['001000010','000000010','000000000','000000000']),'builder slow flags match: '+f.slow);ok(m.validateFrame(f)===null,'built file passes the board checks');
+ const f=m.buildFrame({seq:2,made:'2026-11-13T06:00:00Z',positions:pos});ok(eq(f.d,['-8837--57','588-7--5-','477-7--57','555555555']),'builder digits match the first-pass file: '+f.d);ok(eq(f.slow,['011000010','000000010','000000000','000000000']),'builder slow flags: monthly and yearly sources light their lamps: '+f.slow);ok(m.validateFrame(f)===null,'built file passes the board checks');
  // deadband carries across files
  const pos2=pos.map(r=>r.slice());pos2[0][3]=-2.55;const f2=m.buildFrame({seq:3,made:'2026-11-14T06:00:00Z',positions:pos2,previous:f.d});ok(f2.d[0][3]==='3','CRYO holds 3 across files at -2.55');pos2[0][3]=-2.70;const f3=m.buildFrame({seq:4,made:'2026-11-15T06:00:00Z',positions:pos2,previous:f2.d});ok(f3.d[0][3]==='2','CRYO moves to 2 at -2.70');
  pos2[0][3]=-2.45;const f4=m.buildFrame({seq:5,made:'2026-11-16T06:00:00Z',positions:pos2,previous:f3.d});ok(f4.d[0][3]==='2','and holds 2 on the way back at -2.45');

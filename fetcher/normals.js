@@ -7,6 +7,7 @@ const { steadyRule } = require('./mapping.js');
 const S = require('./series.js');
 
 const FILE = path.join(__dirname, '..', 'data', 'normals-0.json');
+const PALIN_STEP = 6;   // percentage points. Chosen at commissioning so the Year button read 7.
 
 (async () => {
   const old = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : { tubes: {} };
@@ -35,7 +36,7 @@ const FILE = path.join(__dirname, '..', 'data', 'normals-0.json');
   await tube('SOLAR', async () => { const b = need(S.baseline(await load('solar-silso')), 7000, 'days');
     return { source: 'solar-silso + solar-eisn', transform: 'sqrt', normal: meanOf(b), step: 1.5, cadence: 1, unit: 'sunspot number', days: b.length }; });
   await tube('ANTH', async () => { const b = need(S.baseline(await load('anth-owid')), 20, 'years'); const normal = Math.round(S.mean(b.map(r => r.value)));
-    return { source: 'anth-owid', transform: 'linear', normal, step: Math.round(normal * 0.1), cadence: 365, unit: 'TWh a year', years: b.length }; });
+    return { source: 'anth-owid', transform: 'linear', normal, step: Math.round(normal * 0.15), cadence: 365, unit: 'TWh a year', years: b.length }; });
   await tube('LITHO', async () => {
     let events = [];
     for (let y = 2001; y <= 2020; y++) { events = events.concat(await load('litho-usgs', usgsUrl(`${y}-01-01`, `${y + 1}-01-01`))); await sleep(400); }
@@ -47,8 +48,10 @@ const FILE = path.join(__dirname, '..', 'data', 'normals-0.json');
       windows[w] = { normal: +r.normal.toPrecision(5), step: +r.step.toFixed(4), samples: sums.length };
     }
     return { source: 'litho-usgs', transform: 'log10', windows, cadence: 0, unit: 'joules', earthquakes: events.length }; });
-  out.tubes.BIO = { error: 'No machine-readable source chosen yet.' };
-  out.tubes.TECH = { error: 'No machine-readable source. Needs a figure entered by hand.' };
+  // The Pacific cycle is published as a departure from its own normal, so 0 is neutral. Half a degree is the official step between strengths.
+  out.tubes.CYCLO = { source: 'cyclo-nino34', transform: 'linear', normal: 0, step: 0.5, wholeSteps: true, cadence: 30, unit: 'degrees C' };
+  await tube('PALIN', async () => { const rows = await load('palin-owid'), b = need(S.baseline(rows), 20, 'years'); const normal = +S.mean(b.map(r => r.value)).toFixed(2);
+    return { source: 'palin-owid', transform: 'linear', normal, step: PALIN_STEP, cadence: 365, unit: 'percent of electricity', years: b.length, latest: rows[rows.length - 1].value }; });
 
   fs.mkdirSync(path.dirname(FILE), { recursive: true });
   fs.writeFileSync(FILE, JSON.stringify(out, null, 1) + '\n');

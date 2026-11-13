@@ -31,6 +31,8 @@ const ageDays = date => (Date.now() - S.toMs(date)) / S.DAY;
       try { const last = rows[rows.length - 1].date; rows = rows.concat((await load('solar-eisn')).filter(r => r.date > last)); } catch (e) { /* the monthly file alone is fine */ }
       return three(rows, n);
     },
+    CYCLO: async n => { let rows; try { rows = await load('cyclo-nino34'); } catch (e) { rows = await load('cyclo-oni'); } return three(rows, n); },
+    PALIN: async n => { const rows = await load('palin-owid'), r = rows[rows.length - 1]; return { values: [r.value, r.value, r.value], latest: r.date, positions: [0, 0, 0].map(() => M.position(r.value, n)) }; },
     ANTH: async n => { const rows = await load('anth-owid'), r = rows[rows.length - 1]; return { values: [r.value, r.value, r.value], latest: r.date, positions: [0, 0, 0].map(() => M.position(r.value, n)) }; },
     LITHO: async n => {
       const from = new Date(now - 400 * S.DAY).toISOString().slice(0, 10), ev = await load('litho-usgs', usgsUrl(from));
