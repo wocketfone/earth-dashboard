@@ -36,12 +36,12 @@ To run one by hand: open the **Actions** tab, pick the job, and press **Run work
 
 ## What's in here?
 
-- `fetcher/` — the code. `sources.js` lists every data address. `mapping.js` turns values into digits. `build.js` is the hourly job.
-- `data/normals-0.json` — what "normal" is for each tube. It's saved here so it survives even if a source's history disappears.
-- `public/frame-0.json` — the file the instrument reads.
-- `status/latest.json` — the real figures behind the digits, and a note for any tube in trouble. Look here first.
-- `data/year-history.csv` — one line a day, used to decide when the scale needs resetting.
-- `emulator/` — two web pages that imitate the tubes. Open them in a browser.
+- `fetcher/`: the code. `sources.js` lists every data address. `mapping.js` turns values into digits. `build.js` is the hourly job.
+- `data/normals-0.json`: what "normal" is for each tube. It's saved here so it survives even if a source's history disappears.
+- `public/frame-0.json`: the file the instrument reads.
+- `status/latest.json`: the real figures behind the digits, and a note for any tube in trouble. Look here first.
+- `data/year-history.csv`: one line a day, used to decide when the scale needs resetting.
+- `emulator/`: two web pages that imitate the tubes. Open them in a browser.
 
 ## What do I do if it stops?
 

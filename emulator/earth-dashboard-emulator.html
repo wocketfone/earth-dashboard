@@ -148,7 +148,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
             <tbody id="legend"></tbody>
           </table>
         </div>
-        <p class="note">First-pass values. Normal is the 2001–2020 average unless stated.</p>
+        <p class="note">Normal is the 2001–2020 value unless stated. These are the numbers the live fetcher uses.</p>
       </div>
 
       <div class="group">
@@ -177,15 +177,15 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   const NAMES = ['LITHO', 'OCEAN', 'ATMOS', 'CRYO', 'CHEMO', 'BIO', 'ANTH', 'TECH', 'SOLAR'];
   const MODES = ['Today', '90 days', 'Year', 'Baseline'];
   const LEGEND = [
-    ['LITHO', 'a typical year of earthquake energy', 'energy × 2'],
-    ['OCEAN', 'average sea surface temperature', '0.2 °C'],
-    ['ATMOS', 'average surface temperature', '0.2 °C'],
+    ['LITHO', 'a typical day, 90 days, or year of earthquake energy', 'set per button, about energy × 2'],
+    ['OCEAN', '2001–2020 average sea temperature', '0.2 °C'],
+    ['ATMOS', '2001–2020 average air temperature', '0.2 °C'],
     ['CRYO', 'both poles at their usual ice extent', '0.75 standard deviations'],
     ['CHEMO', '391 ppm CO₂', '20 ppm'],
-    ['BIO', 'not set yet', 'not set yet'],
-    ['ANTH', 'not set yet', 'not set yet'],
-    ['TECH', 'its 2025 level', 'not set yet'],
-    ['SOLAR', '57 sunspots', '30 sunspots'],
+    ['BIO', 'no source yet', 'no source yet'],
+    ['ANTH', '140,822 TWh a year', '14,082 TWh (10%)'],
+    ['TECH', 'its 2025 level; no source yet', '× 1.25'],
+    ['SOLAR', '57 sunspots', 'curved; none reads 1, about 200 reads 9'],
   ];
   const N = null;
   // The frame file, version 1. This is what the board fetches. "d" holds nine characters per button, one per tube,
@@ -195,8 +195,8 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   const SCEN = {
     demo:  { label: 'Made-up demo data', note: 'These readings are invented to exercise the display.',
              file: file(1, ['688375657', '588275656', '477375657', '555555555']) },
-    first: { label: 'First-pass real readings', note: 'From the November 2026 first pass. Dark tubes are ones we have no reading for yet.',
-             file: file(2, ['-8837--57', '588-7--5-', '477-7--57', '555555555'], ['001000010', '000000010', '000000000', '000000000']) },
+    first: { label: 'Real readings, 13 November 2026', note: 'A copy of the live file from 13 November 2026. BIO and TECH are dark because they have no data source yet.',
+             file: file(2, ['58937-8-8', '58937-8-5', '47837-8-6', '555555555'], ['011000100', '000000100', '000000000', '000000000']) },
     calm:  { label: 'Made-up: a calm planet', note: 'Invented. Every system sits at its normal.',
              file: file(3, ['555555555', '555555555', '555555555', '555555555']) },
     wild:  { label: 'Made-up: everything off the scale', note: 'Invented. Every tube is pinned at 1 or 9.',
