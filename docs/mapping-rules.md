@@ -34,16 +34,20 @@ The first time a tube is read, there's no previous digit, so plain rounding appl
 | ATMOS | Surface air temperature | Straight | 2001–2020 average | 0.2 °C | Yes |
 | CRYO | Sea ice, Arctic and Antarctic averaged | Straight | Both poles at their usual extent for the date | 0.75 standard deviations | Yes |
 | CHEMO | Carbon dioxide | Straight | 390.6 ppm | 20 ppm | Yes |
-| BIO | Plant growth per year | Straight | Typical year, 2001–2020 | Set from the data | No |
-| ANTH | World energy use per year | Straight | 2001–2020 average | Not set yet | Yes |
-| TECH | Data-centre electricity per year | Curved (each step is ×1.25) | Its 2025 level | ×1.25 | Yes |
+| CYCLO | El Niño and La Niña index (Niño 3.4) | Straight, whole steps | A neutral Pacific | 0.5 °C | No |
+| ANTH | World energy use per year | Straight | 140,822 TWh | 21,123 TWh (15%) | Yes |
+| PALIN | Renewable share of world electricity | Straight | 20.95% | 6 percentage points | No |
 | SOLAR | Sunspot number | Curved (square root) | 56.9 | 1.5 on the square-root scale | No |
 
 On the SOLAR curve, a spotless sun reads 1, an average sun reads 5, and about 200 spots reads 9. All nine digits can light.
 
+CYCLO changes digit when the index crosses a whole step, not half of one. That lines its digits up with the official strengths: 5 is neutral, 6 is a weak El Niño (0.5 °C), 7 is moderate (1.0), 8 is strong (1.5), and 9 is very strong (2.0 or more). La Niña mirrors that on the left.
+
+PALIN is the one tube where leaning right is good news. It doesn't count toward a reset for that reason.
+
 ## How are "set from the data" steps chosen?
 
-For the steady tubes (LITHO and BIO), the fetcher looks at every window of the same length across 2001–2020. Normal is the middle value. The step is sized so the middle 90% of those windows covers digits 2 through 8. That makes 1 and 9 rare.
+For LITHO, the fetcher looks at every window of the same length across 2001–2020. Normal is the middle value. The step is sized so the middle 90% of those windows covers digits 2 through 8. That makes 1 and 9 rare.
 
 LITHO gets this separately for each button. A day is compared with typical days, 90 days with typical 90-day stretches, and a year with typical years. Comparing one day with a scaled-down year doesn't work, because a year's energy is dominated by a few giant earthquakes.
 
@@ -74,6 +78,6 @@ The mapping code has about 1,260 checks. They cover rounding at every boundary, 
 
 ## What isn't settled?
 
-- LITHO, BIO, and ANTH have no numbers yet. They need the real data, which the fetcher will pull.
-- TECH's 2025 level isn't fixed yet.
-- OCEAN and ATMOS were checked against stand-in series from NOAA. They'll be recalculated against the intended sources.
+- OCEAN and ATMOS are still at 0.2 °C a step. With real data, ATMOS reads 9 on two buttons. A wider step, or a livelier comparison for Today and 90 days, is under discussion.
+- OCEAN uses a monthly source. A daily one would be better.
+- The fetcher records the daily history a reset needs, but it can't build the second file yet.

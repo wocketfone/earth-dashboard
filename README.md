@@ -12,7 +12,7 @@ If you've found this because the instrument has stopped updating, start with "Wh
 - **A dark tube means there's no reading.**
 - **A small lamp beside a tube** means its source reports more slowly than the button you pressed, or has gone quiet.
 
-The nine tubes, in order: LITHO (earthquakes), OCEAN (sea temperature), ATMOS (air temperature), CRYO (sea ice), CHEMO (carbon dioxide), BIO (plant growth), ANTH (world energy use), TECH (data-centre electricity), and SOLAR (sunspots).
+The nine tubes, in order: LITHO (earthquakes), OCEAN (sea temperature), ATMOS (air temperature), CRYO (sea ice), CHEMO (carbon dioxide), CYCLO (the El Niño cycle), ANTH (world energy use), PALIN (renewable share of electricity), and SOLAR (sunspots). `docs/channel-names.md` explains the names.
 
 The four buttons pick the time window: today, 90 days, a year, and the baseline.
 
@@ -56,7 +56,6 @@ To test changes on your own computer, install Node.js and run the three test fil
 
 ## What isn't finished?
 
-- **BIO and TECH have no data source yet.** Their tubes are dark.
 - **The reset isn't built.** The plan is in `docs/mapping-rules.md`. When tubes have been pinned at 1 or 9 for a year, the job should publish `frame-1.json` on a new scale.
 - **OCEAN uses a monthly source.** A daily one would be better.
 
