@@ -86,6 +86,7 @@ The fetcher does all of this itself, inside the hourly job. Nobody has to run an
 - **Button 4 remembers.** On a new scale, button 4 shows where each tube's old normal sits. It's worked out once and saved with the new normal.
 - **Gaps don't matter.** A day with no reading neither counts toward the year nor breaks it. A tube needs at least 300 readings in the 365 days to count as pinned.
 - **A failing source can't block it for ever.** If a tube's new normal can't be worked out, the fetcher waits and tries again each hour. After 48 tries it goes ahead, and that tube keeps its old normal. If the source was already dead, it doesn't wait at all.
+- **A damaged file can't stop it.** If the published frame, the status file, or the daily history is damaged, the job rebuilds it and carries on, and the frame number never goes backwards. If a saved normal is damaged, the job stops and says so, because guessing a scale would be worse than pausing.
 - **Later resets work the same way.** Only the newest scale is watched. When it runs out of room too, `frame-2.json` appears, and the lamp lights on every older file.
 - **For ice, the spread stays.** CRYO's step is measured in spreads for the calendar day. A reset moves the usual extent and keeps the old spread, so the step doesn't change.
 - **CYCLO doesn't move.** Its source already reports the difference from a neutral Pacific.
@@ -96,7 +97,9 @@ The files a reset adds are `data/normals-1.json`, `public/frame-1.json`, `status
 
 The mapping code has about 15,000 checks. They cover rounding at every boundary, the pins, the deadband in both directions, a value wobbling on a line, slow ramps through all nine digits, the SOLAR curve, the reset rule, and the old-normal reading for button 4. The first-pass readings for OCEAN, ATMOS, CHEMO, and CRYO reproduce exactly.
 
-A second suite runs the whole fetcher with no network, on made-up source files whose answers can be worked out by hand. It has 113 checks. They cover failed and stale sources, the deadband between runs, and the reset from start to finish: the day before it's due, the day it runs, the frozen normal, a source that fails during it, and a second reset years later.
+A second suite runs the whole fetcher with no network, on made-up source files whose answers can be worked out by hand. It has 147 checks. They cover failed and stale sources, the deadband between runs, and the reset from start to finish: the day before it's due, the day it runs, the frozen normal, a source that fails during it, and a second reset years later. They also damage each file the job keeps for itself and check that it carries on.
+
+The reset has also been rehearsed against the real sources. The "Rehearse a reset" job pretends one is due today, builds both files in a scratch copy, and writes what it found to `status/rehearsal.json`. It changes nothing the instrument reads.
 
 ## What isn't settled?
 

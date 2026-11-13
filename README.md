@@ -31,6 +31,8 @@ A job on GitHub runs every hour. It reads each data source, works out the digits
 | Build the frame | Reads the sources and publishes the file | Every hour, or by hand |
 | Work out the normals | Recalculates "normal" from 2001–2020 | By hand only |
 | Probe data sources | Tests each source and writes a report | By hand only |
+| Rehearse a reset | Pretends a reset is due and reports what would happen. Changes nothing the instrument reads | By hand only |
+| Publish the emulator | Puts the emulator on the web | Whenever the emulator changes |
 
 To run one by hand: open the **Actions** tab, pick the job, and press **Run workflow**.
 

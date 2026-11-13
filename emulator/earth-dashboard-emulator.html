@@ -76,7 +76,8 @@ select{max-width:100%}
 label{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px}
 input[type=checkbox]{accent-color:var(--accent)}
 input[type=range]{accent-color:var(--accent);flex:1;min-width:120px}
-label.wide{flex-basis:100%}
+label.wide{flex-basis:100%;flex-wrap:wrap;min-width:0}
+label.wide input[type=range]{min-width:0;flex:1 1 120px}
 textarea{font-family:var(--mono);font-size:12.5px;line-height:1.5;width:100%;box-sizing:border-box;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
 textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 label b{font-weight:500;color:var(--fg);font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -373,7 +374,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     $('keys').appendChild(b);
   });
   for (const k in SCEN) $('scen').add(new Option(SCEN[k].label, k));
-  const loadScen = () => { live = false; $('scen').value = scen; eras = SCEN[scen].eras; era = 0; cur = eras[0]; $('scennote').textContent = SCEN[scen].note; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = ''; };
+  const loadScen = () => { live = false; ticket++; $('scen').value = scen; eras = SCEN[scen].eras; era = 0; cur = eras[0]; $('scennote').textContent = SCEN[scen].note; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = ''; };
   $('scen').add(new Option('Live data from the address above', 'live'));
   $('scen').onchange = e => { if (e.target.value === 'live') { e.target.value = scen; fetchLive(); return; } scen = e.target.value; loadScen(); };
 
@@ -381,35 +382,40 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   // It gets the file for the scale the board is on, runs the same checks, and takes all of it or none of it.
   const LIVE = 'https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/frame-0.json';
   $('fetchurl').value = LIVE; $('fetchurl').oninput = () => { live = false; };
-  let live = false, fetching = false, fetched = { state: 'none', word: 'Not tried yet', msg: '' };
+  let live = false, fetching = false, ticket = 0, fetched = { state: 'none', word: 'Not tried yet', msg: '' };
   const setFetch = (state, word, msg) => { fetched = { state, word, msg }; $('fetchlamp').className = 'lamp big ' + state; $('fetchword').textContent = word; $('fetchmsg').textContent = msg; return fetched; };
   const ago = ms => { const m = Math.round(ms / 60000); return m < 1 ? 'just now' : m < 90 ? `${m} minute${m === 1 ? '' : 's'} ago` : m < 48 * 60 ? `${Math.round(m / 60)} hours ago` : `${Math.round(m / 1440)} days ago`; };
   const addressFor = e => $('fetchurl').value.trim().replace(/frame-\d+\.json/, `frame-${e}.json`);
-  async function getFrame(url, fetcher, nowMs) {
-    let text;
+  // A server that never answers must not leave the button stuck, so every call gives up after a while.
+  async function getFrame(url, fetcher, nowMs, waitMs) {
+    let text, timer;
     try {
-      const res = await fetcher(url + (url.includes('?') ? '&' : '?') + 't=' + nowMs, { cache: 'no-store' });
-      if (!res.ok) return { why: 'status', status: res.status };
-      text = await res.text();
-    } catch (e) { return { why: 'reach' }; }
+      const call = (async () => { const res = await fetcher(url + (url.includes('?') ? '&' : '?') + 't=' + nowMs, { cache: 'no-store' }); return res.ok ? { text: await res.text() } : { why: 'status', status: res.status }; })();
+      const got = await Promise.race([call, new Promise(done => { timer = setTimeout(() => done({ why: 'slow' }), waitMs); })]);
+      if (got.why) return got;
+      text = got.text;
+    } catch (e) { return { why: 'reach' }; } finally { clearTimeout(timer); }
     const r = parseFrame(text);
     return r.error ? { why: 'checks', error: r.error } : r;
   }
   const KEEP = ' The tubes keep the last good frame.';
-  async function fetchLive(fetcher = (u, o) => fetch(u, o), nowMs = Date.now()) {
+  async function fetchLive(fetcher = (u, o) => fetch(u, o), nowMs = Date.now(), waitMs = 15000) {
     if (fetching) return null;
     fetching = true; $('fetchnow').disabled = true; setFetch('busy', 'Fetching', '');
     try {
       const url = live ? addressFor(era) : $('fetchurl').value.trim();
       if (!/^https?:\/\//i.test(url)) return setFetch('bad', 'Bad', 'The address has to start with http:// or https://.' + KEEP);
-      const r = await getFrame(url, fetcher, nowMs);
+      const mine = ++ticket, r = await getFrame(url, fetcher, nowMs, waitMs);
+      // If another data set was chosen while this was on its way, that choice stands.
+      if (mine !== ticket) return setFetch('none', 'Not used', 'You picked other data while this was fetching, so the fetched file was set aside.');
+      if (r.why === 'slow') return setFetch('bad', 'Bad', `No answer after ${Math.round(waitMs / 1000)} seconds, so the fetch was given up.` + KEEP);
       if (r.why === 'reach') return setFetch('bad', 'Bad', 'Couldn\'t reach the address. Inside Claude\'s viewer that\'s expected, because pages there aren\'t allowed to call outside addresses. The same emulator at wocketfone.github.io/earth-dashboard can.' + KEEP);
       if (r.why === 'status') return setFetch('bad', 'Bad', `The server answered ${r.status}${r.status === 404 ? ', which means there\'s no file at that address' : ''}.` + KEEP);
       if (r.why === 'checks') return setFetch('bad', 'Bad', 'The file arrived but failed the board\'s checks, so all of it was rejected. ' + r.error + KEEP);
       const same = live && cur.file.seq === r.file.seq && cur.file.made === r.file.made && cur.file.era === r.file.era;
       eras = []; era = r.file.era; eras[era] = r; cur = r; live = true; scen = 'live';
       // If a newer scale is ready, get that file too, so the covered button has somewhere to go.
-      if (r.file.ready) { const nx = await getFrame(addressFor(era + 1), fetcher, nowMs); if (!nx.why && nx.file.era === era + 1) eras[era + 1] = nx; }
+      if (r.file.ready) { const nx = await getFrame(addressFor(era + 1), fetcher, nowMs, waitMs); if (!nx.why && nx.file.era === era + 1) eras[era + 1] = nx; }
       $('scen').value = 'live'; $('scennote').textContent = 'Live readings, fetched from the address above.'; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = '';
       const age = nowMs - Date.parse(r.file.made), when = `Frame ${r.file.seq}, made ${ago(age)}.`;
       if (age > 26 * 3600000) return setFetch('old', 'Old', `${when} The file passed every check, but the fetcher refreshes it at least once a day, so the fetcher has stopped. The tubes show it anyway.`);
@@ -417,10 +423,11 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     } finally { fetching = false; $('fetchnow').disabled = false; }
   }
   $('fetchnow').onclick = () => { fetchLive(); };
+  ticket = 0;
   $('sendframe').onclick = () => {
     const r = parseFrame($('framebox').value);
     if (r.error) { $('framemsg').textContent = 'Rejected, and the last good frame stays. ' + r.error; return; }
-    live = false; eras = [r]; era = 0; cur = r; $('framemsg').textContent = `Accepted frame ${r.file.seq}. The tubes walk quietly to any new reading.`;
+    live = false; ticket++; eras = [r]; era = 0; cur = r; $('framemsg').textContent = `Accepted frame ${r.file.seq}. The tubes walk quietly to any new reading.`;
   };
   loadScen();
   $('wake').onclick = () => { asleep = false; lamp = null; begin(true); };
