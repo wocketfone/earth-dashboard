@@ -1,5 +1,5 @@
 {
-  "ran": "2026-11-13T13:50:03.053Z",
+  "ran": "2026-11-13T13:51:38.929Z",
   "sources": [
     {
       "id": "litho-usgs",
@@ -14,7 +14,7 @@
       "last": "2026-11-13",
       "lastValue": 1995262314968.8828,
       "ok": true,
-      "seconds": 0.6
+      "seconds": 0.3
     },
     {
       "id": "ocean-oisst",
@@ -29,7 +29,7 @@
       "last": "2024-09-21",
       "lastValue": 20.93,
       "ok": true,
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "id": "ocean-ncei",
@@ -59,7 +59,7 @@
       "last": "2026-10-15",
       "lastValue": 1.55,
       "ok": true,
-      "seconds": 0.3
+      "seconds": 0.2
     },
     {
       "id": "atmos-ncei",
@@ -89,7 +89,7 @@
       "last": "2026-11-12",
       "lastValue": 8.852,
       "ok": true,
-      "seconds": 0.6
+      "seconds": 0.8
     },
     {
       "id": "cryo-south",
@@ -116,7 +116,7 @@
       "head": "<html> <head><title>404 Not Found</title></head> <body> <center><h1>404 Not Found</h1></center> <hr><center>nginx/1.23.4</center> </body> </html> ",
       "ok": false,
       "error": "The server answered 404.",
-      "seconds": 0.2
+      "seconds": 0.1
     },
     {
       "id": "cryo-south-v3",
@@ -173,7 +173,7 @@
       "last": "2024-07-01",
       "lastValue": 176737.094,
       "ok": true,
-      "seconds": 0.8
+      "seconds": 0.1
     },
     {
       "id": "solar-silso",
@@ -188,7 +188,7 @@
       "last": "2026-10-31",
       "lastValue": 24,
       "ok": true,
-      "seconds": 1.8
+      "seconds": 1.7
     }
   ]
 }
