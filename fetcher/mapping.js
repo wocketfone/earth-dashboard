@@ -13,8 +13,10 @@ const TRANSFORMS = {
 // PALIN doesn't either: renewables reaching 9 is good news, not the planet outrunning its scale.
 const RULES = {
   LITHO: { family: 'steady',   transform: 'log10',  normal: null,  step: null, counts: false, unit: 'joules of earthquake energy in the window' },
-  OCEAN: { family: 'climbing', transform: 'linear', normal: 0,     step: 0.2,  counts: true,  unit: 'degrees C against the 2001-2020 average' },
-  ATMOS: { family: 'climbing', transform: 'linear', normal: 0,     step: 0.2,  counts: true,  unit: 'degrees C against the 2001-2020 average' },
+  // OCEAN and ATMOS ask two questions. Year: how far from 2001-2020, at 0.3 a step. Today and 90 days: how far from
+  // the same time of year over the last ten years, at 0.1 a step. That second question is what makes them move.
+  OCEAN: { family: 'climbing', transform: 'linear', normal: 0,     step: 0.3,  recentStep: 0.1, counts: true,  unit: 'degrees C' },
+  ATMOS: { family: 'climbing', transform: 'linear', normal: 0,     step: 0.3,  recentStep: 0.1, counts: true,  unit: 'degrees C' },
   CRYO:  { family: 'climbing', transform: 'linear', normal: 0,     step: 0.75, counts: true,  unit: 'standard deviations, Arctic and Antarctic averaged' },
   CHEMO: { family: 'climbing', transform: 'linear', normal: 390.6, step: 20,   counts: true,  unit: 'ppm of carbon dioxide' },
   CYCLO: { family: 'steady',   transform: 'linear', normal: 0,     step: 0.5,  wholeSteps: true, counts: false, unit: 'degrees C in the central Pacific; 0.5 is a weak El Nino, 2.0 a very strong one' },

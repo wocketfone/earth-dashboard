@@ -13,6 +13,20 @@ function windowMean(rows, end, days) {
 const between = (rows, from, to) => rows.filter(r => r.date >= from && r.date <= to);
 const baseline = rows => between(rows, '2001-01-01', '2020-12-31');
 
+// How the last `n` monthly readings compare with the same calendar months in the `years` years before each one.
+// Returns the average difference, or null if too few of those earlier years have data.
+function vsRecentYears(rows, n, years = 10) {
+  if (rows.length < n) return null;
+  const byDate = new Map(rows.map(r => [r.date, r.value])), diffs = [];
+  for (const r of rows.slice(-n)) {
+    const y = +r.date.slice(0, 4), rest = r.date.slice(4), past = [];
+    for (let k = 1; k <= years; k++) { const v = byDate.get(`${y - k}${rest}`); if (v !== undefined) past.push(v); }
+    if (past.length < Math.ceil(years * 0.8)) return null;
+    diffs.push(r.value - mean(past));
+  }
+  return mean(diffs);
+}
+
 // Sea ice. For each calendar day, the usual extent and its spread over the baseline years, pooled over five days.
 function iceClimatology(rows) {
   const base = baseline(rows), byKey = {};
@@ -51,4 +65,4 @@ function rollingSums(daily, days) {
 // Energy released in the last `hours` hours before `nowMs`.
 function energySince(events, nowMs, hours) { return events.filter(e => e.time > nowMs - hours * 3600000 && e.time <= nowMs).reduce((x, e) => x + e.value, 0); }
 
-module.exports = { DAY, toMs, mean, sd, windowMean, between, baseline, iceClimatology, iceZ, pairMean, dailySums, rollingSums, energySince };
+module.exports = { DAY, toMs, mean, sd, windowMean, vsRecentYears, between, baseline, iceClimatology, iceZ, pairMean, dailySums, rollingSums, energySince };

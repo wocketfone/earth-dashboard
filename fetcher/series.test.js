@@ -13,4 +13,9 @@ const ev=[{date:'2026-01-01',time:Date.parse('2026-01-01T05:00:00Z'),value:10},{
 const d=s.dailySums(ev,'2026-01-01','2026-01-04');ok(JSON.stringify(d.map(x=>x.value))==='[15,0,7,0]','daily sums with quiet days');ok(JSON.stringify(s.rollingSums(d,2))==='[15,7,7]','rolling sums');ok(JSON.stringify(s.rollingSums(d,1))==='[15,0,7,0]','rolling 1');
 ok(s.energySince(ev,Date.parse('2026-01-03T02:00:00Z'),24)===7&&s.energySince(ev,Date.parse('2026-01-01T21:00:00Z'),24)===15&&s.energySince(ev,Date.parse('2026-01-10T00:00:00Z'),24)===0,'energy in the last 24 hours');
 ok(s.baseline([{date:'2000-12-31',value:1},{date:'2001-01-01',value:2},{date:'2020-12-31',value:3},{date:'2021-01-01',value:4}]).length===2,'baseline is 2001 through 2020');
+// compared with the last ten years: a steady climb of 0.02 a year, with this year 0.3 above the line
+{const mrows=[];for(let y=2010;y<=2026;y++)for(let mo=1;mo<=12;mo++){if(y===2026&&mo>10)continue;mrows.push({date:`${y}-${String(mo).padStart(2,'0')}-15`,value:0.02*(y-2010)+0.1*Math.sin(mo)+(y===2026?0.3:0)})}
+ ok(near(s.vsRecentYears(mrows,1),0.02*5.5+0.3,1e-9),'vs last ten years, one month: '+s.vsRecentYears(mrows,1));ok(near(s.vsRecentYears(mrows,3),0.02*5.5+0.3,1e-9),'vs last ten years, three months');
+ ok(s.vsRecentYears(mrows.filter(r=>r.date>='2020'),1)===null,'too little history gives no reading');ok(s.vsRecentYears([],1)===null,'no data gives no reading');
+ const gappy=mrows.filter(r=>!(r.date.startsWith('2019')||r.date.startsWith('2021')));ok(s.vsRecentYears(gappy,1)!==null,'two missing years out of ten is still enough');ok(s.vsRecentYears(mrows.filter(r=>!/^201[6-9]/.test(r.date)),1)===null,'four missing years is not')}
 console.log(`series: PASS ${pass}  FAIL ${fail}`);process.exit(fail?1:0);

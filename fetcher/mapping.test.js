@@ -37,7 +37,7 @@ ok(m.encode([6,8,8,3,7,null,null,5,7])==='68837--57','encode');
  ok(!m.resetDue(Array(365).fill([1,9,9,5,7,1,6,5,1])),'steady tubes at 1 do not count (quiet sun, quiet earth)');ok(!m.resetDue(Array(365).fill([5,9,9,3,7,5,6,5,7])),'two pinned is not enough');
  ok(m.resetDue(Array(400).fill(calm).concat(Array(365).fill(hot))),'only the last 365 days matter')}
 // memory digit after a reset: old normal on the new scale
-ok(m.memoryDigit(390.6,{...R.CHEMO,normal:455})===2,'CHEMO old normal reads 2 on a 455 ppm normal');ok(m.memoryDigit(0,{...R.OCEAN,normal:0.9})===1,'OCEAN old normal pins at 1');ok(m.memoryDigit(0,{...R.CRYO,normal:-2.2})===8,'CRYO old normal leans right');ok(m.memoryDigit(5,{transform:'linear',normal:5,step:1})===5,'unchanged normal reads 5');
+ok(m.memoryDigit(390.6,{...R.CHEMO,normal:455})===2,'CHEMO old normal reads 2 on a 455 ppm normal');ok(m.memoryDigit(0,{...R.OCEAN,normal:1.2})===1,'OCEAN old normal pins at 1');ok(R.OCEAN.step===0.3&&R.ATMOS.step===0.3&&R.OCEAN.recentStep===0.1&&R.ATMOS.recentStep===0.1,'OCEAN and ATMOS steps');ok(m.memoryDigit(0,{...R.CRYO,normal:-2.2})===8,'CRYO old normal leans right');ok(m.memoryDigit(5,{transform:'linear',normal:5,step:1})===5,'unchanged normal reads 5');
 
 // reset rule with gaps in the data
 {const hot=[5,9,9,1,7,5,6,5,7],gap=[5,null,9,1,7,5,6,5,7];const h=Array(365).fill(hot).map(x=>x.slice());for(let i=0;i<30;i++)h[i*10]=gap;ok(m.resetDue(h),'30 missing days do not break a run');

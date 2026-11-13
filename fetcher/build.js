@@ -21,9 +21,16 @@ const ageDays = date => (Date.now() - S.toMs(date)) / S.DAY;
     const end = rows[rows.length - 1].date, values = [rows[rows.length - 1].value, S.windowMean(rows, end, 90), S.windowMean(rows, end, 365)];
     return { values, latest: end, positions: values.map(v => M.position(v, rule)) };
   };
+  // OCEAN and ATMOS: Today and 90 days compare with the same months of the last ten years. Year compares with 2001-2020.
+  const twoQuestions = (rows, n) => {
+    const end = rows[rows.length - 1].date, recent = { transform: 'linear', normal: 0, step: n.recentStep };
+    const values = [S.vsRecentYears(rows, 1, n.recentYears), S.vsRecentYears(rows, 3, n.recentYears), S.windowMean(rows, end, 365)];
+    return { values, latest: end, positions: [M.position(values[0], recent), M.position(values[1], recent), M.position(values[2], n)],
+      note: 'Today and 90 days are degrees above the same months of the last ten years. Year is the level; normal is ' + n.normal + '.' };
+  };
   const readers = {
-    OCEAN: async n => three(await load('ocean-ncei'), n),
-    ATMOS: async n => three(await load('atmos-gistemp'), n),
+    OCEAN: async n => twoQuestions(await load('ocean-ncei'), n),
+    ATMOS: async n => twoQuestions(await load('atmos-gistemp'), n),
     CHEMO: async n => { let rows; try { rows = await load('chemo-daily'); } catch (e) { rows = await load('chemo-monthly'); } return three(rows, n); },
     CRYO: async n => three(S.pairMean(S.iceZ(await load('cryo-north'), n.clim.north), S.iceZ(await load('cryo-south'), n.clim.south)), n),
     SOLAR: async n => {
@@ -49,7 +56,7 @@ const ageDays = date => (Date.now() - S.toMs(date)) / S.DAY;
     try {
       if (!n || n.error || !readers[name]) throw new Error(n && n.error ? n.error : 'No reader for this tube.');
       const r = await readers[name](n);
-      status.tubes[name] = { ok: true, source: n.source, unit: n.unit, latest: r.latest, values: r.values, positions: r.positions.map(p => (p === null || !Number.isFinite(p) ? p : +p.toFixed(3))) };
+      status.tubes[name] = { ok: true, source: n.source, unit: n.unit, latest: r.latest, ...(r.note ? { about: r.note } : {}), values: r.values, positions: r.positions.map(p => (p === null || !Number.isFinite(p) ? p : +p.toFixed(3))) };
       if (ageDays(r.latest) > STALE_AFTER[n.cadence]) { stale.push(name); status.tubes[name].note = 'The source has not published anything new for a while.'; }
       console.log('OK  ', name, r.latest, r.values.map(v => (v === null ? 'none' : +v.toPrecision(5))).join(', '));
     } catch (e) {

@@ -24,9 +24,9 @@ const PALIN_STEP = 6;   // percentage points. Chosen at commissioning so the Yea
   const meanOf = rows => +S.mean(rows.map(r => r.value)).toFixed(4);
 
   await tube('OCEAN', async () => { const b = need(S.baseline(await load('ocean-ncei')), 230, 'months');
-    return { source: 'ocean-ncei', transform: 'linear', normal: meanOf(b), step: 0.2, cadence: 30, unit: 'degrees C', months: b.length }; });
+    return { source: 'ocean-ncei', transform: 'linear', normal: meanOf(b), step: 0.3, recentStep: 0.1, recentYears: 10, cadence: 30, unit: 'degrees C', months: b.length }; });
   await tube('ATMOS', async () => { const b = need(S.baseline(await load('atmos-gistemp')), 230, 'months');
-    return { source: 'atmos-gistemp', transform: 'linear', normal: meanOf(b), step: 0.2, cadence: 30, unit: 'degrees C', months: b.length }; });
+    return { source: 'atmos-gistemp', transform: 'linear', normal: meanOf(b), step: 0.3, recentStep: 0.1, recentYears: 10, cadence: 30, unit: 'degrees C', months: b.length }; });
   await tube('CHEMO', async () => { const b = need(S.baseline(await load('chemo-monthly')), 230, 'months');
     return { source: 'chemo-daily', transform: 'linear', normal: meanOf(b), step: 20, cadence: 1, unit: 'ppm', months: b.length }; });
   await tube('CRYO', async () => {
