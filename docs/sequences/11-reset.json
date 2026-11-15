@@ -1,0 +1,63 @@
+{
+ "name": "11-reset", "what": "The reset. The board fetches a frame with the lamp lit, and the next scale's file. The covered button is pressed: the board moves to scale 1, the colour comes on, and the full sequence runs to the new readings.",
+ "frame": {
+  "v": 1,
+  "seq": 10,
+  "made": "2026-11-15T12:00:00.000Z",
+  "poll": 3600, "era": 0, "ready": false, "glow": "",
+  "d": [
+   "123456789",
+   "987654321",
+   "19-555-91",
+   "555555555"
+  ],
+  "slow": [
+   "100000000",
+   "000000001",
+   "000010000",
+   "000000000"
+  ]
+ },
+ "timings": {
+  "sampledEveryMs": 10,
+  "sweepStepMs": 220,
+  "walkStepMs": 700,
+  "idleAfterPressMs": 2000,
+  "idleAfterWakeMs": 5000,
+  "lampTestStepMs": 1000 },
+ "start": {
+  "show": "123456789", "lamps": "100000000", "era": 0, "glow": "", "ready": false, "asleep": false },
+ "events": [
+  { "at": 500, "what": "frame with \"ready\": true arrives" },
+  { "at": 6500, "what": "press the covered button" }
+ ],
+ "changes": [
+  { "at": 510, "lamps": "000000000", "ready": true },
+  { "at": 530, "show": "234567899" },
+  { "at": 1230, "show": "345678999" },
+  { "at": 1940, "show": "456789999" },
+  { "at": 2640, "show": "567899999" },
+  { "at": 3340, "show": "678999999" },
+  { "at": 4040, "show": "789999999" },
+  { "at": 4740, "show": "899999999" },
+  { "at": 5450, "show": "999999999" },
+  { "at": 6510, "show": "000000000", "era": 1, "glow": "7A5CFF", "ready": false },
+  { "at": 6720, "show": "111111111" },
+  { "at": 6940, "show": "222222222" },
+  { "at": 7160, "show": "333333333" },
+  { "at": 7380, "show": "444444444" },
+  { "at": 7600, "show": "555555555" },
+  { "at": 7820, "show": "666666666" },
+  { "at": 8040, "show": "777777777" },
+  { "at": 8260, "show": "888888888" },
+  { "at": 8480, "show": "999999999" },
+  { "at": 8700, "show": "888888888" },
+  { "at": 8920, "show": "777777777" },
+  { "at": 9140, "show": "666666666" },
+  { "at": 9360, "show": "555555555" },
+  { "at": 14580, "show": "666666666" }
+ ],
+ "lengthMs": 22000,
+ "end": {
+  "show": "666666666", "lamps": "000000000", "era": 1, "glow": "7A5CFF", "ready": false, "asleep": false }
+}

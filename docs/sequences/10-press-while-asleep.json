@@ -1,0 +1,58 @@
+{
+ "name": "10-press-while-asleep", "what": "Asleep. Button 2 is pressed, which also wakes it.",
+ "frame": {
+  "v": 1,
+  "seq": 10,
+  "made": "2026-11-15T12:00:00.000Z",
+  "poll": 3600, "era": 0, "ready": false, "glow": "",
+  "d": [
+   "123456789",
+   "987654321",
+   "19-555-91",
+   "555555555"
+  ],
+  "slow": [
+   "100000000",
+   "000000001",
+   "000010000",
+   "000000000"
+  ]
+ },
+ "timings": {
+  "sampledEveryMs": 10,
+  "sweepStepMs": 220,
+  "walkStepMs": 700,
+  "idleAfterPressMs": 2000,
+  "idleAfterWakeMs": 5000,
+  "lampTestStepMs": 1000 },
+ "start": {
+  "show": "123456789", "lamps": "100000000", "era": 0, "glow": "", "ready": false, "asleep": false },
+ "events": [
+  { "at": 0, "what": "everyone leaves" },
+  { "at": 2000, "what": "press button 2" }
+ ],
+ "changes": [
+  { "at": 10, "show": "---------", "lamps": "000000000", "asleep": true },
+  { "at": 2010, "show": "000000000", "asleep": false },
+  { "at": 2230, "show": "111111111" },
+  { "at": 2450, "show": "222222222" },
+  { "at": 2670, "show": "333333333" },
+  { "at": 2890, "show": "444444444" },
+  { "at": 3110, "show": "555555555" },
+  { "at": 3330, "show": "666666666" },
+  { "at": 3550, "show": "777777777" },
+  { "at": 3770, "show": "888888888" },
+  { "at": 3990, "show": "999999999" },
+  { "at": 4210, "show": "888888888" },
+  { "at": 4430, "show": "777777777" },
+  { "at": 4650, "show": "666666666" },
+  { "at": 4870, "show": "555555555" },
+  { "at": 10080, "show": "666654444", "lamps": "000000001" },
+  { "at": 10780, "show": "777654333" },
+  { "at": 11480, "show": "887654322" },
+  { "at": 12180, "show": "987654321" }
+ ],
+ "lengthMs": 18000,
+ "end": {
+  "show": "987654321", "lamps": "000000001", "era": 0, "glow": "", "ready": false, "asleep": false }
+}

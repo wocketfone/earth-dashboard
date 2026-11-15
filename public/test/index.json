@@ -1,0 +1,131 @@
+{
+ "about": "Bench test files for the Earth Dashboard. Fetch each from this folder. \"accept\" files must pass the board's checks; \"reject\" files must be refused whole, leaving the last good frame on the tubes.",
+ "base": "https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/",
+ "files": [
+  {
+   "file": "calm.json",
+   "expect": "accept",
+   "shows": "Every tube at 5 on every button. After the sweep, nothing walks."
+  },
+  {
+   "file": "spread.json",
+   "expect": "accept",
+   "shows": "Button 1 reads 1 to 9 across the tubes in file order. Button 2 reads 9 down to 1. Button 3 alternates 1, 5, 9. Shows every digit on every tube and the longest walks."
+  },
+  {
+   "file": "pinned.json",
+   "expect": "accept",
+   "shows": "Only 1s and 9s, the two ends of the scale. The walk from 5 takes four steps on every tube."
+  },
+  {
+   "file": "dark.json",
+   "expect": "accept",
+   "shows": "A \"-\" is a tube with no reading: it goes dark at the walk, with its lamp off. Button 2 leaves all nine dark. The sweep and the idle still light every tube."
+  },
+  {
+   "file": "lamps.json",
+   "expect": "accept",
+   "shows": "Marker lamps only. Button 1 lights all nine, button 2 every other one, button 3 the last tube only, button 4 none."
+  },
+  {
+   "file": "extra-fields.json",
+   "expect": "accept",
+   "shows": "Has fields a board has never heard of. It must be accepted, and button 1 reads 2 4 6 8 1 3 5 7 9."
+  },
+  {
+   "file": "poll-short.json",
+   "expect": "accept",
+   "shows": "Asks to be fetched every 60 seconds, the shortest wait allowed."
+  },
+  {
+   "file": "reset/frame-0.json",
+   "expect": "accept",
+   "shows": "The original scale with the reset lamp lit (\"ready\": true). The lamp by the covered button lights. Pressing it moves the board to reset/frame-1.json."
+  },
+  {
+   "file": "reset/frame-1.json",
+   "expect": "accept",
+   "shows": "The scale after a reset: every tube at 6, the tube-base colour 7A5CFF, and button 4 showing the old normal at 1. Its own frame number starts again at 1. The lamp is not lit, so the covered button does nothing here."
+  },
+  {
+   "file": "moving.json",
+   "expect": "accept",
+   "shows": "Changes on the hour, every hour. Button 1 reads 1 to 9 across the tubes, moved along by one tube each hour, and one marker lamp moves with it. A board left resting on button 1 should step every tube by one digit, with no sweep. \"seq\" is the number of hours since 1970, so it always rises."
+  },
+  {
+   "file": "bad/not-json.json",
+   "expect": "reject",
+   "why": "A web page where the file should be."
+  },
+  {
+   "file": "bad/cut-short.json",
+   "expect": "reject",
+   "why": "The file stops partway through, as after a dropped connection."
+  },
+  {
+   "file": "bad/empty.json",
+   "expect": "reject",
+   "why": "An empty file."
+  },
+  {
+   "file": "bad/digit-zero.json",
+   "expect": "reject",
+   "why": "One digit is 0, which is never a reading."
+  },
+  {
+   "file": "bad/digit-letter.json",
+   "expect": "reject",
+   "why": "One character is a letter."
+  },
+  {
+   "file": "bad/eight-tubes.json",
+   "expect": "reject",
+   "why": "Button 1 has eight characters, not nine."
+  },
+  {
+   "file": "bad/ten-tubes.json",
+   "expect": "reject",
+   "why": "Button 1 has ten characters."
+  },
+  {
+   "file": "bad/three-buttons.json",
+   "expect": "reject",
+   "why": "\"d\" has three strings, not four."
+  },
+  {
+   "file": "bad/version-2.json",
+   "expect": "reject",
+   "why": "A format version this board does not know."
+  },
+  {
+   "file": "bad/poll-too-short.json",
+   "expect": "reject",
+   "why": "\"poll\" is under 60 seconds."
+  },
+  {
+   "file": "bad/lamp-flag.json",
+   "expect": "reject",
+   "why": "A lamp flag that is neither 0 nor 1."
+  },
+  {
+   "file": "bad/seq-text.json",
+   "expect": "reject",
+   "why": "\"seq\" is text, not a number."
+  },
+  {
+   "file": "bad/glow-hash.json",
+   "expect": "reject",
+   "why": "The colour has a \"#\" in front, making it seven characters."
+  },
+  {
+   "file": "bad/a-list.json",
+   "expect": "reject",
+   "why": "A valid frame wrapped in a list."
+  },
+  {
+   "file": "bad/no-such-file.json",
+   "expect": "reject",
+   "why": "There is no file here, so the server answers 404."
+  }
+ ]
+}

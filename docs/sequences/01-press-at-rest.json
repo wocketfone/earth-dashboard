@@ -1,0 +1,56 @@
+{
+ "name": "01-press-at-rest", "what": "Resting on button 1. Button 2 is pressed. Sweep up 0 to 9, fall back to 5, idle two seconds, then walk one digit a beat to the new readings.",
+ "frame": {
+  "v": 1,
+  "seq": 10,
+  "made": "2026-11-15T12:00:00.000Z",
+  "poll": 3600, "era": 0, "ready": false, "glow": "",
+  "d": [
+   "123456789",
+   "987654321",
+   "19-555-91",
+   "555555555"
+  ],
+  "slow": [
+   "100000000",
+   "000000001",
+   "000010000",
+   "000000000"
+  ]
+ },
+ "timings": {
+  "sampledEveryMs": 10,
+  "sweepStepMs": 220,
+  "walkStepMs": 700,
+  "idleAfterPressMs": 2000,
+  "idleAfterWakeMs": 5000,
+  "lampTestStepMs": 1000 },
+ "start": {
+  "show": "123456789", "lamps": "100000000", "era": 0, "glow": "", "ready": false, "asleep": false },
+ "events": [
+  { "at": 500, "what": "press button 2" }
+ ],
+ "changes": [
+  { "at": 510, "show": "000000000", "lamps": "000000000" },
+  { "at": 730, "show": "111111111" },
+  { "at": 950, "show": "222222222" },
+  { "at": 1170, "show": "333333333" },
+  { "at": 1390, "show": "444444444" },
+  { "at": 1610, "show": "555555555" },
+  { "at": 1830, "show": "666666666" },
+  { "at": 2050, "show": "777777777" },
+  { "at": 2270, "show": "888888888" },
+  { "at": 2490, "show": "999999999" },
+  { "at": 2710, "show": "888888888" },
+  { "at": 2930, "show": "777777777" },
+  { "at": 3150, "show": "666666666" },
+  { "at": 3370, "show": "555555555" },
+  { "at": 5590, "show": "666654444", "lamps": "000000001" },
+  { "at": 6290, "show": "777654333" },
+  { "at": 6980, "show": "887654322" },
+  { "at": 7680, "show": "987654321" }
+ ],
+ "lengthMs": 13000,
+ "end": {
+  "show": "987654321", "lamps": "000000001", "era": 0, "glow": "", "ready": false, "asleep": false }
+}

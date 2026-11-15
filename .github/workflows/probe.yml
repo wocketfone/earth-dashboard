@@ -18,6 +18,8 @@ jobs:
       - run: node fetcher/series.test.js
       - run: node fetcher/sources.test.js
       - run: node fetcher/build.test.js
+      - run: node fetcher/testfiles.test.js
+      - run: node emulator/sequences.test.js
       - run: node fetcher/probe.js
       - name: Save the result
         run: |

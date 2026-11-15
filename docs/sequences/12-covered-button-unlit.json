@@ -1,0 +1,37 @@
+{
+ "name": "12-covered-button-unlit", "what": "The covered button is pressed while its lamp is not lit. Nothing happens.",
+ "frame": {
+  "v": 1,
+  "seq": 10,
+  "made": "2026-11-15T12:00:00.000Z",
+  "poll": 3600, "era": 0, "ready": false, "glow": "",
+  "d": [
+   "123456789",
+   "987654321",
+   "19-555-91",
+   "555555555"
+  ],
+  "slow": [
+   "100000000",
+   "000000001",
+   "000010000",
+   "000000000"
+  ]
+ },
+ "timings": {
+  "sampledEveryMs": 10,
+  "sweepStepMs": 220,
+  "walkStepMs": 700,
+  "idleAfterPressMs": 2000,
+  "idleAfterWakeMs": 5000,
+  "lampTestStepMs": 1000 },
+ "start": {
+  "show": "123456789", "lamps": "100000000", "era": 0, "glow": "", "ready": false, "asleep": false },
+ "events": [
+  { "at": 500, "what": "press the covered button" }
+ ],
+ "changes": [],
+ "lengthMs": 3000,
+ "end": {
+  "show": "123456789", "lamps": "100000000", "era": 0, "glow": "", "ready": false, "asleep": false }
+}

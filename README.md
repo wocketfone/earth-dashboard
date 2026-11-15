@@ -43,7 +43,10 @@ To run one by hand: open the **Actions** tab, pick the job, and press **Run work
 - `public/frame-0.json`: the file the instrument reads.
 - `status/latest.json`: the real figures behind the digits, and a note for any tube in trouble. Look here first.
 - `data/year-history.csv`: one line a day, used to decide when the scale needs resetting.
-- `emulator/`: two web pages that imitate the tubes. The main one is live at https://wocketfone.github.io/earth-dashboard/ and has a button that fetches the real file and says whether the fetch was good.
+- `docs/firmware-brief.md`: what the instrument's own board has to do, on one page.
+- `public/test/`: made-up frames for bench testing a board. `index.json` in that folder lists them and says what each should do.
+- `docs/sequences/`: recordings of exactly what the tubes do in twelve situations, for checking firmware against.
+- `emulator/`: two web pages that imitate the tubes. The main one is live at https://wocketfone.github.io/earth-dashboard/ and has a button that fetches the real file and says whether the fetch was good. The single-tube one is at https://wocketfone.github.io/earth-dashboard/z550m.html.
 
 ## What happens at a reset?
 
@@ -65,7 +68,7 @@ The full rules are in `docs/mapping-rules.md`.
 
 When one source fails, the others carry on. That tube keeps its last reading and its lamp lights.
 
-To test changes on your own computer, install Node.js and run the four test files in `fetcher/`, for example `node fetcher/mapping.test.js`.
+To test changes on your own computer, install Node.js and run the test files in `fetcher/`, for example `node fetcher/mapping.test.js`.
 
 ## What isn't finished?
 

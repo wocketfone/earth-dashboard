@@ -40,6 +40,8 @@ p{margin:0;max-width:65ch}
 .cell span{font-family:var(--mono);font-size:12px;letter-spacing:.12em;display:flex;align-items:center;gap:6px}
 .lamp{width:7px;height:7px;border-radius:50%;background:var(--lamp-off);flex:none}
 .lamp.on{background:var(--lamp-on);box-shadow:0 0 7px var(--lamp-on)}
+.lede.also{font-size:13px;margin-top:6px}
+.lede a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .lamp.big{width:11px;height:11px;display:inline-block}
 .lamp.good{background:#2fbf71;box-shadow:0 0 7px #2fbf71}
 .lamp.bad{background:#e5484d;box-shadow:0 0 7px #e5484d}
@@ -95,6 +97,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   <header>
     <h1>Earth Dashboard Emulator</h1>
     <p class="lede">Nine Z550M tubes and four buttons. Straight up is normal. A glow leaning right means more than normal; leaning left means less.</p>
+    <p class="lede also">Also: the <a href="https://wocketfone.github.io/earth-dashboard/z550m.html">single-tube emulator</a>, and the <a href="https://github.com/wocketfone/earth-dashboard">code, test files, and notes on GitHub</a>.</p>
   </header>
 
   <div class="bench">
@@ -132,7 +135,36 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
         </div>
         <p class="note" id="fetchmsg">Gets the file the board will get, from the address below, and runs the board's checks on it.</p>
         <label for="fetchurl">Address the board fetches from</label>
-        <input id="fetchurl" type="url" spellcheck="false" autocomplete="off">
+        <input id="fetchurl" type="url" spellcheck="false" autocomplete="off" list="addresses">
+        <datalist id="addresses">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/frame-0.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/calm.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/spread.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/pinned.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/dark.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/lamps.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/extra-fields.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/poll-short.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/reset/frame-0.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/reset/frame-1.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/moving.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/not-json.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/cut-short.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/empty.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/digit-zero.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/digit-letter.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/eight-tubes.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/ten-tubes.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/three-buttons.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/version-2.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/poll-too-short.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/lamp-flag.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/seq-text.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/glow-hash.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/a-list.json">
+          <option value="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/bad/no-such-file.json">
+        </datalist>
+        <p class="note">Clear the box to pick a bench test file. Some are good and some are bad on purpose. Their dates are fixed, so the good ones read Old.</p>
       </div>
 
       <div class="group">

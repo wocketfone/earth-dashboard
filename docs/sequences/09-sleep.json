@@ -1,0 +1,39 @@
+{
+ "name": "09-sleep", "what": "Resting on button 2 when everyone leaves. All tubes and lamps go dark.",
+ "frame": {
+  "v": 1,
+  "seq": 10,
+  "made": "2026-11-15T12:00:00.000Z",
+  "poll": 3600, "era": 0, "ready": false, "glow": "",
+  "d": [
+   "123456789",
+   "987654321",
+   "19-555-91",
+   "555555555"
+  ],
+  "slow": [
+   "100000000",
+   "000000001",
+   "000010000",
+   "000000000"
+  ]
+ },
+ "timings": {
+  "sampledEveryMs": 10,
+  "sweepStepMs": 220,
+  "walkStepMs": 700,
+  "idleAfterPressMs": 2000,
+  "idleAfterWakeMs": 5000,
+  "lampTestStepMs": 1000 },
+ "start": {
+  "show": "987654321", "lamps": "000000001", "era": 0, "glow": "", "ready": false, "asleep": false },
+ "events": [
+  { "at": 500, "what": "everyone leaves" }
+ ],
+ "changes": [
+  { "at": 510, "show": "---------", "lamps": "000000000", "asleep": true }
+ ],
+ "lengthMs": 3000,
+ "end": {
+  "show": "---------", "lamps": "000000000", "era": 0, "glow": "", "ready": false, "asleep": true }
+}

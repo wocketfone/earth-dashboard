@@ -1,0 +1,77 @@
+{
+ "about": "Recorded from the emulator. \"show\" is the digit each tube is told to show, in file order (LITHO, OCEAN, ATMOS, CRYO, CHEMO, CYCLO, ANTH, PALIN, SOLAR); \"-\" is blank. \"lamps\" is the nine marker lamps. Times are in milliseconds from the start of the recording, sampled every 10 ms. Each change lists only what changed.",
+ "sequences": [
+  {
+   "file": "01-press-at-rest.json",
+   "what": "Resting on button 1. Button 2 is pressed. Sweep up 0 to 9, fall back to 5, idle two seconds, then walk one digit a beat to the new readings.",
+   "lengthMs": 13000,
+   "changes": 18
+  },
+  {
+   "file": "02-wake.json",
+   "what": "Asleep and dark. Someone walks up. The same sequence, with a five-second idle at 5.",
+   "lengthMs": 18000,
+   "changes": 19
+  },
+  {
+   "file": "03-press-during-sweep.json",
+   "what": "Button 2 is pressed, then button 3 while the sweep is still running. The sweep carries on and the walk goes to button 3's readings.",
+   "lengthMs": 13000,
+   "changes": 18
+  },
+  {
+   "file": "04-press-during-idle.json",
+   "what": "Button 2 is pressed, then button 4 during the idle at 5. No new sweep. The walk goes to button 4's readings, which are all 5, so nothing moves.",
+   "lengthMs": 12000,
+   "changes": 14
+  },
+  {
+   "file": "05-press-during-walk.json",
+   "what": "Button 2 is pressed, then button 1 partway through the walk. The whole sequence starts again from the sweep.",
+   "lengthMs": 21000,
+   "changes": 34
+  },
+  {
+   "file": "06-new-data-at-rest.json",
+   "what": "Resting on button 1 when a new frame arrives with three changed digits and a moved lamp. No sweep: each changed tube steps one digit a beat.",
+   "lengthMs": 5000,
+   "changes": 3
+  },
+  {
+   "file": "07-lamp-test.json",
+   "what": "The lamp test: every tube shows 0, then 1, up to 9, a second each, then returns to its reading.",
+   "lengthMs": 20000,
+   "changes": 11
+  },
+  {
+   "file": "08-dark-tubes.json",
+   "what": "Button 3 has two tubes with no reading. They sweep and idle with the rest, then go dark at the walk.",
+   "lengthMs": 13000,
+   "changes": 18
+  },
+  {
+   "file": "09-sleep.json",
+   "what": "Resting on button 2 when everyone leaves. All tubes and lamps go dark.",
+   "lengthMs": 3000,
+   "changes": 1
+  },
+  {
+   "file": "10-press-while-asleep.json",
+   "what": "Asleep. Button 2 is pressed, which also wakes it.",
+   "lengthMs": 18000,
+   "changes": 19
+  },
+  {
+   "file": "11-reset.json",
+   "what": "The reset. The board fetches a frame with the lamp lit, and the next scale's file. The covered button is pressed: the board moves to scale 1, the colour comes on, and the full sequence runs to the new readings.",
+   "lengthMs": 22000,
+   "changes": 24
+  },
+  {
+   "file": "12-covered-button-unlit.json",
+   "what": "The covered button is pressed while its lamp is not lit. Nothing happens.",
+   "lengthMs": 3000,
+   "changes": 0
+  }
+ ]
+}

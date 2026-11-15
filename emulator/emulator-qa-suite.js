@@ -240,4 +240,19 @@ for(const scheme of ['light','dark'])for(const w of [1120,400]){const p=await b.
  await p.press(1);await p.adv(0.02);await p.adv(0.22*3+0.12);s=await p.st();ok(s.eye.every(e=>e[3]*3.2>0.6&&e[2]*3.2<0.15),'T26 during the sweep the eye sees digit 3 lit and digit 2 nearly gone: '+s.eye[0].map(v=>v.toFixed(2)).join(' '));
  await p.click('#sleep');await p.adv(0.5);s=await p.st();ok(s.eye.every(e=>e.every(v=>v<0.005)),'T26 asleep, nothing is drawn lit');
  await p.check('#rawglow');ok((await p.st()).raw===true,'T26 the switch turns the raw pulse on');ok(p.errs.length===0,'T26 no script errors');await p.close()}
+// T27 the bench test files: the emulator's checks agree with the index, file by file, and the page links to them
+{const TD='/home/claude/earth-dashboard/public/test/',idx=JSON.parse(fs.readFileSync(TD+'index.json','utf8'));const p=await fresh();await p.adv(8);
+ for(const e of idx.files){if(/no-such-file/.test(e.file))continue;const body=fs.readFileSync(TD+e.file,'utf8'),r=await p.evaluate(t=>{const r=window.__emu.parseFrame(t);return r.error||null},body);
+   ok(e.expect==='accept'?r===null:r!==null,`T27 ${e.file}: the emulator ${e.expect}s it (${r})`)}
+ const opts=await p.evaluate(()=>[...document.querySelectorAll('#addresses option')].map(o=>o.value));ok(opts.length===idx.files.length+1&&idx.files.every(e=>opts.includes(idx.base+e.file)),'T27 every test file is offered in the address box: '+opts.length);
+ // fetch each one through the stand-in network and check Good/Old/Bad and what shows
+ const go=(file,now)=>p.evaluate(async([file,TD_,now])=>{document.getElementById('fetchurl').value='https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/'+file;document.getElementById('fetchurl').dispatchEvent(new Event('input'));
+   return window.__emu.fetchLive(async u=>{const m=/public\/test\/(.+?\.json)/.exec(u)[1],b=window.__files[m];if(b===undefined)return{ok:false,status:404,text:async()=>''};return{ok:true,status:200,text:async()=>b}},now)},[file,TD,now]);
+ const files={};for(const e of idx.files)if(!/no-such-file/.test(e.file))files[e.file]=fs.readFileSync(TD+e.file,'utf8');await p.evaluate(f=>{window.__files=f},files);
+ const SOON=Date.parse('2026-11-15T13:00:00Z');let x=await go('spread.json',SOON);ok(x.state==='good','T27 spread.json fetched within the day: Good');await p.adv(10);ok(eq((await p.st()).sel,[1,2,3,4,5,6,7,8,9]),'T27 spread.json shows 1 to 9');
+ x=await go('spread.json',SOON+5*86400000);ok(x.state==='old','T27 the same file days later: Old, as the note says');
+ for(const e of idx.files.filter(e=>e.expect==='reject')){x=await go(e.file,SOON);ok(x.state==='bad',`T27 ${e.file}: Bad`);}await p.adv(3);ok(eq((await p.st()).sel,[1,2,3,4,5,6,7,8,9]),'T27 after all fifteen bad files, spread.json is still showing');
+ x=await go('dark.json',SOON);await p.adv(10);ok(eq((await p.st()).sel,[1,-1,3,-1,5,-1,7,-1,9]),'T27 dark.json leaves four tubes dark');x=await go('lamps.json',SOON);await p.adv(10);ok((await p.st()).lamps.every(Boolean),'T27 lamps.json lights all nine lamps on button 1');
+ x=await go('reset/frame-0.json',SOON);ok(x.state==='good'&&(await p.evaluate(()=>window.__emu.fetched().live&&window.__emu.fetched().next)),'T27 reset/frame-0.json lights the lamp and finds reset/frame-1.json');await p.adv(10);ok(await p.evaluate(()=>window.__emu.pressReset()),'T27 the covered button works on the test pair');await p.adv(15);let s=await p.st();ok(s.era===1&&s.glow==='7A5CFF'&&eq(s.sel,[6,6,6,6,6,6,6,6,6]),'T27 and lands on reset/frame-1.json');
+ ok((await p.evaluate(()=>[...document.querySelectorAll('header a')].map(a=>a.href))).join().includes('z550m.html'),'T27 the page links to the single-tube emulator');ok(p.errs.length===0,'T27 no script errors');await p.close()}
 console.log(`PASS ${pass}  FAIL ${fail}`);fails.forEach(f=>console.log(' x',f));await b.close()})()
