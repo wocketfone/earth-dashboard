@@ -1,7 +1,7 @@
 {
  "era": 0,
  "period": "2001-2020",
- "made": "2026-11-13T21:52:45.215Z",
+ "made": "2026-11-16T14:24:13.935Z",
  "tubes": {
   "OCEAN": {
    "source": "ocean-daily-ecmwf",
@@ -3002,13 +3002,20 @@
    "days": 7305
   },
   "ANTH": {
-   "source": "anth-owid",
+   "source": "power-ember",
+   "measures": "electricity",
+   "monthly": true,
    "transform": "linear",
-   "normal": 140822,
-   "step": 21123,
-   "cadence": 365,
+   "normal": 21457,
+   "step": 5364,
+   "recentStep": 2,
+   "cadence": 30,
    "unit": "TWh a year",
-   "years": 20
+   "years": 20,
+   "fallback": {
+    "source": "anth-owid",
+    "cadence": 365
+   }
   },
   "LITHO": {
    "source": "litho-usgs",
@@ -3044,14 +3051,20 @@
    "unit": "degrees C"
   },
   "PALIN": {
-   "source": "palin-owid",
+   "source": "power-ember",
+   "monthly": true,
    "transform": "linear",
    "normal": 20.95,
    "step": 6,
-   "cadence": 365,
+   "recentStep": 1,
+   "cadence": 30,
    "unit": "percent of electricity",
    "years": 20,
-   "latest": 33.76
+   "latest": 33.76,
+   "fallback": {
+    "source": "palin-owid",
+    "cadence": 365
+   }
   }
  }
 }
