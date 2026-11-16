@@ -1,5 +1,5 @@
 {
- "made": "2026-11-16T14:04:27.834Z",
+ "made": "2026-11-16T14:26:34.683Z",
  "era": 0,
  "tubes": {
   "LITHO": {
@@ -108,37 +108,39 @@
   },
   "ANTH": {
    "ok": true,
-   "source": "anth-owid",
+   "source": "power-ember",
    "unit": "TWh a year",
-   "latest": "2024-07-01",
+   "latest": "2026-09-15",
+   "about": "Today and 90 days are the change from the same months a year earlier, in percent. Year is the total over the last twelve months; normal is 21457.",
    "values": [
-    176737.094,
-    176737.094,
-    176737.094
+    2.8909824785093408,
+    2.757589998588106,
+    31717.620000000006
    ],
    "positions": [
-    1.7,
-    1.7,
-    1.7
+    1.445,
+    1.379,
+    1.913
    ],
-   "digits": "777"
+   "digits": "667"
   },
   "PALIN": {
    "ok": true,
-   "source": "palin-owid",
+   "source": "power-ember",
    "unit": "percent of electricity",
-   "latest": "2025-07-01",
+   "latest": "2026-09-15",
+   "about": "Today and 90 days are the change in the share from the same months a year earlier, in percentage points. Year is the share over the last twelve months; normal is 20.95.",
    "values": [
-    33.76,
-    33.76,
-    33.76
+    0.5183856113498564,
+    1.3636564164786265,
+    34.90718092971667
    ],
    "positions": [
-    2.135,
-    2.135,
-    2.135
+    0.518,
+    1.364,
+    2.326
    ],
-   "digits": "777"
+   "digits": "667"
   },
   "SOLAR": {
    "ok": true,
@@ -146,12 +148,12 @@
    "unit": "sunspot number",
    "latest": "2026-11-16",
    "values": [
-    102,
-    63.144444444444446,
-    85.37260273972603
+    101,
+    63.13333333333333,
+    85.36986301369863
    ],
    "positions": [
-    1.702,
+    1.669,
     0.267,
     1.129
    ],
@@ -160,21 +162,21 @@
  },
  "frame": {
   "v": 1,
-  "seq": 11,
-  "made": "2026-11-16T14:04:27.834Z",
+  "seq": 12,
+  "made": "2026-11-16T14:26:34.683Z",
   "poll": 3600,
   "era": 0,
   "ready": false,
   "glow": "",
   "d": [
-   "488379777",
-   "587379775",
+   "488379667",
+   "587379665",
    "467376776",
    "555555555"
   ],
   "slow": [
    "000001110",
-   "000000110",
+   "000000000",
    "000000000",
    "000000000"
   ]
