@@ -8,7 +8,7 @@ const { get, SOURCES } = require('./sources.js');
     const row = { id: src.id, tube: src.tube, role: src.role, url: src.url() };
     const t0 = Date.now();
     try {
-      const res = await get(row.url);
+      const res = await get(row.url, src.keepHours ? 240000 : undefined);          // the kept sources are large files
       row.status = res.status; row.bytes = res.text.length; row.head = res.text.slice(0, 160).replace(/\s+/g, ' ');
       if (!res.ok) throw new Error('The server answered ' + res.status + '.');
       const rows = src.parse(res.text);

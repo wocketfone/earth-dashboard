@@ -1,10 +1,10 @@
 # Earth Dashboard: Mapping Rules
 
-Version 1, 12 November 2026. This is how a measurement becomes a digit on a tube. The code is in `claude/fetcher/mapping.js`, with its tests beside it.
+Version 2, 16 November 2026. This is how a measurement becomes a digit on a tube. The code is in `fetcher/mapping.js`, with its tests beside it.
 
 ## What does a digit mean?
 
-- **5 is normal.** Normal is the 2001–2020 value for that tube, until a reset.
+- **5 is normal.** Normal is the 2001–2020 value for that tube, until a reset. Four tubes use a nearer normal on Today and 90 days; that's explained under their own headings.
 - **Each digit away from 5 is one step.** A step is a fixed amount, set per tube.
 - **Right of 5 means more of the thing measured. Left means less.** It never means better or worse. Warming tubes lean right; ice leans left.
 - **1 and 9 mean "this far or further."**
@@ -81,9 +81,9 @@ LITHO gets this separately for each button. A day is compared with typical days,
 
 ## What does each button show?
 
-- **Button 1, Today:** the freshest figure the source has.
-- **Button 2, 90 days:** the average over the last 90 days.
-- **Button 3, Year:** the average over the last 365 days.
+- **Button 1, Today:** the freshest figure the source has. For a monthly source that's the latest month.
+- **Button 2, 90 days:** the average over the last 90 days, or the last three months.
+- **Button 3, Year:** the average over the last 365 days, or the last twelve months.
 - **Button 4, Baseline:** nine 5s. After a reset, it shows where the old normal sits on the new scale.
 
 If a source reports more slowly than the button's window, the tube shows the source's latest figure and its marker lamp lights.
@@ -100,13 +100,13 @@ The fetcher decides, with no person involved.
 - **The lamp lights.** The current file's `ready` flag turns true, which lights the lamp by the covered button.
 - **Someone presses the button.** The board moves to the new file. Nothing changes on the tubes until that press.
 
-The fetcher does all of this itself, inside the hourly job. Nobody has to run anything.
+The fetcher does all of this itself, inside its regular job, which runs twice an hour. Nobody has to run anything.
 
-- **Every scale keeps publishing.** After a reset, `frame-0.json` and `frame-1.json` are both updated every hour. A board that nobody has pressed the button on still gets readings.
+- **Every scale keeps publishing.** After a reset, `frame-0.json` and `frame-1.json` are both updated on every run. A board that nobody has pressed the button on still gets readings.
 - **Each new scale has a colour.** `frame-1.json` carries `"glow": "7A5CFF"`. Later scales use `3D7BFF`, then `C04DFF`, then round again. These are placeholders until the colours are chosen.
 - **Button 4 remembers.** On a new scale, button 4 shows where each tube's old normal sits. It's worked out once and saved with the new normal.
 - **Gaps don't matter.** A day with no reading neither counts toward the year nor breaks it. A tube needs at least 300 readings in the 365 days to count as pinned.
-- **A failing source can't block it for ever.** If a tube's new normal can't be worked out, the fetcher waits and tries again each hour. After 48 tries it goes ahead, and that tube keeps its old normal. If the source was already dead, it doesn't wait at all.
+- **A failing source can't block it for ever.** If a tube's new normal can't be worked out, the fetcher waits and tries again on each run. After two days of trying it goes ahead, and that tube keeps its old normal. If the source was already dead, it doesn't wait at all.
 - **A damaged file can't stop it.** If the published frame, the status file, or the daily history is damaged, the job rebuilds it and carries on, and the frame number never goes backwards. If a saved normal is damaged, the job stops and says so, because guessing a scale would be worse than pausing.
 - **Later resets work the same way.** Only the newest scale is watched. When it runs out of room too, `frame-2.json` appears, and the lamp lights on every older file.
 - **For ice, the spread stays.** CRYO's step is measured in spreads for the calendar day. A reset moves the usual extent and keeps the old spread, so the step doesn't change.
@@ -118,7 +118,7 @@ The files a reset adds are `data/normals-1.json`, `public/frame-1.json`, `status
 
 The mapping code has about 15,000 checks. They cover rounding at every boundary, the pins, the deadband in both directions, a value wobbling on a line, slow ramps through all nine digits, the SOLAR curve, the reset rule, and the old-normal reading for button 4. The first-pass readings for OCEAN, ATMOS, CHEMO, and CRYO reproduce exactly.
 
-A second suite runs the whole fetcher with no network, on made-up source files whose answers can be worked out by hand. It has 147 checks. They cover failed and stale sources, the deadband between runs, and the reset from start to finish: the day before it's due, the day it runs, the frozen normal, a source that fails during it, and a second reset years later. They also damage each file the job keeps for itself and check that it carries on.
+A second suite runs the whole fetcher with no network, on made-up source files whose answers can be worked out by hand. It has 220 or so checks. They cover failed and stale sources, each backup taking over and handing back, the daily cache, the deadband between runs, and the reset from start to finish: the day before it's due, the day it runs, the frozen normal, a source that fails during it, and a second reset years later. They also damage each file the job keeps for itself and check that it carries on.
 
 The reset has also been rehearsed against the real sources. The "Rehearse a reset" job pretends one is due today, builds both files in a scratch copy, and writes what it found to `status/rehearsal.json`. It changes nothing the instrument reads.
 

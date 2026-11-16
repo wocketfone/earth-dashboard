@@ -17,7 +17,10 @@ async function load(id, url) {
   const kept = keep ? readCache(id) : null;
   if (kept && (clock() - Date.parse(kept.fetched)) / 3600000 < src.keepHours && clock() >= Date.parse(kept.fetched)) return kept.rows;
   try {
-    const rows = await fetchRows(id, url);
+    let rows = await fetchRows(id, url);
+    // A source's record should only ever grow. If a fresh copy ends earlier than the kept one, it was cut short or
+    // rolled back, so the kept rows stand. The time is still noted, so a broken source isn't asked again every run.
+    if (kept && rows[rows.length - 1].date < kept.rows[kept.rows.length - 1].date) rows = kept.rows;
     if (keep) { fs.mkdirSync(path.dirname(cacheFile(id)), { recursive: true }); fs.writeFileSync(cacheFile(id), JSON.stringify({ fetched: new Date(clock()).toISOString(), rows }) + '\n'); }
     return rows;
   } catch (e) { if (kept) return kept.rows; throw e; }

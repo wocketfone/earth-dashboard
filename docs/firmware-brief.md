@@ -13,9 +13,9 @@ One small JSON file, under 300 bytes, over HTTPS:
 `N` is the scale the board is on. It starts at 0 and is kept in flash.
 
 ```json
-{"v":1,"seq":9,"made":"2026-11-15T19:52:25.946Z","poll":3600,"era":0,"ready":false,"glow":"",
- "d":["488379777","587379775","467376776","555555555"],
- "slow":["000001110","000000110","000000000","000000000"]}
+{"v":1,"seq":12,"made":"2026-11-16T14:26:34.683Z","poll":3600,"era":0,"ready":false,"glow":"",
+ "d":["488379667","587379665","467376776","555555555"],
+ "slow":["000001110","000000000","000000000","000000000"]}
 ```
 
 - **`d`** is four strings, for buttons 1 to 4. Each has nine characters, one per tube. A character is `1` to `9`, or `-` for a dark tube.
@@ -82,7 +82,7 @@ Each scale's file keeps its own `seq`, so `frame-1.json` starts again at 1. Comp
 `https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/test/`
 
 - `spread.json` puts 1 to 9 across the tubes, which shows every digit and the wiring order.
-- `moving.json` changes on the hour, so a board left resting shows the quiet walk with nobody pressing anything.
+- `moving.json` changes on the hour, so a board left resting shows the quiet walk with nobody pressing anything. GitHub sometimes runs late, so it can sit for two or three hours and then move several digits at once.
 - `reset/frame-0.json` and `reset/frame-1.json` are a lit reset lamp and the scale it leads to.
 - `bad/` holds the fifteen files to reject.
 

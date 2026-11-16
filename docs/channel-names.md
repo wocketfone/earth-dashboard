@@ -1,6 +1,6 @@
 # Earth Dashboard: Channel Names
 
-Version 1.1, 13 November 2026. This is the readable copy of the naming document. The Word version sits beside it.
+Version 1.2, 16 November 2026. This is the readable copy of the naming document. The Word version sits beside it.
 
 ## Why do the tubes have these names?
 
@@ -25,6 +25,10 @@ The nine names make the instrument read like a piece of mid-century laboratory e
 - **BIO became CYCLO.** No program-readable source exists for global plant growth. The Pacific cycle has one, and it's the liveliest honest signal on the panel.
 - **TECH became PALIN.** Data-centre electricity is only published in yearly reports that a person has to type in. The renewable share can be fetched, and it gives the panel one tube where leaning right is good news. PALIN is the root of palingenesis, which means regeneration.
 - **The tubes show one digit each**, not three.
+
+## What changed in version 1.2?
+
+- **ANTH now measures electricity, not all energy.** World electricity use is published every month; total energy use only once a year. Electricity is also where the growth is, including from data centres.
 
 ## How are the tubes grouped on the panel?
 

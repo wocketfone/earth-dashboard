@@ -24,7 +24,7 @@ The board inside the instrument fetches that address about once an hour. The fil
 
 ## How does it stay up to date?
 
-A job on GitHub runs every hour. It reads each data source, works out the digits, and saves the file if anything changed. Nobody has to do anything.
+A job on GitHub runs twice an hour. It reads each data source, works out the digits, and saves the file if anything changed. Nobody has to do anything.
 
 | Job | What it does | When |
 |---|---|---|
@@ -38,10 +38,11 @@ To run one by hand: open the **Actions** tab, pick the job, and press **Run work
 
 ## What's in here?
 
-- `fetcher/`: the code. `sources.js` lists every data address. `mapping.js` turns values into digits. `build.js` is the hourly job.
+- `fetcher/`: the code. `sources.js` lists every data address. `mapping.js` turns values into digits. `build.js` is the regular job.
 - `data/normals-0.json`: what "normal" is for each tube. It's saved here so it survives even if a source's history disappears.
 - `public/frame-0.json`: the file the instrument reads.
 - `status/latest.json`: the real figures behind the digits, and a note for any tube in trouble. Look here first.
+- `data/cache/`: kept copies of three large source files, so they're fetched once a day and still answer if their source is down.
 - `data/year-history.csv`: one line a day, used to decide when the scale needs resetting.
 - `docs/firmware-brief.md`: what the instrument's own board has to do, on one page.
 - `public/test/`: made-up frames for bench testing a board. `index.json` in that folder lists them and says what each should do.
@@ -50,12 +51,12 @@ To run one by hand: open the **Actions** tab, pick the job, and press **Run work
 
 ## What happens at a reset?
 
-If the planet moves so far that three or more tubes sit pinned at 1 or 9 for a whole year, the hourly job builds a new scale by itself. Nobody has to run anything.
+If the planet moves so far that three or more tubes sit pinned at 1 or 9 for a whole year, the regular job builds a new scale by itself. Nobody has to run anything.
 
 - A second file appears, `public/frame-1.json`, measured against the ten years ending that day.
 - The first file starts saying `"ready": true`. That lights the lamp by the covered button on the instrument.
 - When someone presses the covered button, the instrument switches to the new file. Until then it carries on as before.
-- Both files keep updating every hour. The new normal is saved in `data/normals-1.json` and never changes.
+- Both files keep updating on every run. The new normal is saved in `data/normals-1.json` and never changes.
 
 The full rules are in `docs/mapping-rules.md`.
 

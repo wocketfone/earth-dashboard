@@ -1,4 +1,4 @@
-// The regular job. Reads every source, works out the nine digits for each button, and writes public/frame-0.json.
+// The regular job, run twice an hour. Reads every source, works out the nine digits for each button, and writes public/frame-0.json.
 // If a source fails, its tube keeps its last reading and its marker lamp lights. Nothing here can make a tube show a guess.
 //
 // It also runs the reset, with no person involved. When three or more counting tubes have sat pinned on the Year button
@@ -19,7 +19,7 @@ const STALE_AFTER = { 0: 3, 1: 10, 30: 100, 365: 1000 };           // days witho
 const ageDays = date => (clock() - S.toMs(date)) / S.DAY;
 
 const GLOWS = ['7A5CFF', '3D7BFF', 'C04DFF'];                       // tube-base colour for scales 1, 2, 3, then round again. Scale 0 has none.
-const TRIES = 48;                                                   // runs to wait for a failing source before a reset goes ahead without it
+const TRIES = 96;                                                   // runs to wait for a failing source before a reset goes ahead without it: two days at two runs an hour
 const files = e => ({ frame: `public/frame-${e}.json`, status: e ? `status/latest-${e}.json` : 'status/latest.json', history: e ? `data/year-history-${e}.csv` : 'data/year-history.csv' });
 const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { recursive: true }); fs.writeFileSync(path.join(ROOT, f), text); };
 

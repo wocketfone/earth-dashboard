@@ -50,7 +50,7 @@
   {
    "file": "moving.json",
    "expect": "accept",
-   "shows": "Changes on the hour, every hour. Button 1 reads 1 to 9 across the tubes, moved along by one tube each hour, and one marker lamp moves with it. A board left resting on button 1 should step every tube by one digit, with no sweep. \"seq\" is the number of hours since 1970, so it always rises."
+   "shows": "Changes on the hour, whenever the job next runs. GitHub sometimes runs late or skips a run, so it can sit for two or three hours and then move several places at once. Button 1 reads 1 to 9 across the tubes, moved along by one tube for each hour passed, and one marker lamp moves with it. A board left resting on button 1 should walk every tube to its new digit, one digit a beat, with no sweep. \"seq\" is the number of hours since 1970, so it always rises."
   },
   {
    "file": "bad/not-json.json",
