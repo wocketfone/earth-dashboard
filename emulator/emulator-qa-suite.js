@@ -65,7 +65,7 @@ for(let tube=0;tube<9;tube++)for(let dg=0;dg<10;dg++){if((tube*10+dg)%7&&!(tube=
 // T0 first frame after load already shows the readings
 {const p=await fresh();const s=await p.st();ok(eq(s.sel,SCEN.demo.frame[0])&&eq(s.lit,SCEN.demo.frame[0]),'T0 lit on first frame: '+s.sel+' / '+s.lit);await p.close()}
 // T0b the page opens on the real readings, not the made-up ones
-{const p=await b.newPage({viewport:{width:1120,height:1000}});await p.setContent(html);await p.waitForTimeout(300);const s=await p.evaluate(()=>window.__emu.state());ok(s.scen==='first'&&(await p.inputValue('#scen'))==='first','T0b opens on real readings');ok(eq(s.sel,SCEN.first.frame[0]),'T0b tubes show them: '+s.sel);ok(s.sel[7]===7,'T0b PALIN reads 7 on real data');await p.close()}
+{const p=await b.newPage({viewport:{width:1120,height:1000}});await p.setContent(html);await p.waitForTimeout(300);const s=await p.evaluate(()=>window.__emu.state());ok(s.scen==='first'&&(await p.inputValue('#scen'))==='first','T0b opens on real readings');ok(eq(s.sel,SCEN.first.frame[0]),'T0b tubes show them: '+s.sel);ok(s.sel[7]===6&&s.sel[6]===6,'T0b ANTH and PALIN read 6 on Today in the real data');await p.close()}
 // T12 new data at rest: quiet walk, no sweep
 {const p=await fresh();await p.adv(1);let prev=(await p.st()).sel;await p.selectOption('#scen','wild');let steps=0,sweeps=0;
  for(let j=0;j<12;j++){await p.adv(.35);const s=await p.st();if(s.phase!=='rest')sweeps++;s.sel.forEach((v,i)=>{ok(Math.abs(v-prev[i])<=1,`T12 tube${i} moved ${prev[i]}->${v}`);ok(v!==0,'T12 no 0')});if(!eq(s.sel,prev))steps++;prev=s.sel}
