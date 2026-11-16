@@ -29,6 +29,7 @@ A job on GitHub runs twice an hour. It reads each data source, works out the dig
 | Job | What it does | When |
 |---|---|---|
 | Build the frame | Reads the sources and publishes the file | Twice an hour, or by hand. GitHub sometimes skips a run; the next one catches up |
+| Second timer | Starts "Build the frame" at different minutes, in case GitHub leaves the first timer unstarted | Twice an hour |
 | Work out the normals | Recalculates "normal" from 2001–2020 | By hand only |
 | Probe data sources | Tests each source and writes a report | By hand only |
 | Rehearse a reset | Pretends a reset is due and reports what would happen. Changes nothing the instrument reads | By hand only |
@@ -65,7 +66,8 @@ The full rules are in `docs/mapping-rules.md`.
 1. **Open `status/latest.json`.** Each tube says whether its source answered, and why not if it didn't.
 2. **Check the Actions tab.** A red cross on "Build the frame" means the job itself failed. Click it to read why.
 3. **A source has probably moved.** Agencies change their file addresses every few years. Every address is in `fetcher/sources.js`. Find the new address, change that one line, and run "Probe data sources" to check it.
-4. **GitHub pauses scheduled jobs on repositories with no activity for 60 days.** If that's happened, the Actions tab will offer a button to turn it back on.
+4. **GitHub pauses scheduled jobs on repositories with no activity for 60 days.** If that's happened, the Actions tab will offer a button to turn it back on. Turn on both "Build the frame" and "Second timer".
+5. **GitHub sometimes just runs late.** Gaps of a few hours between runs are normal and do no harm. A whole day with no run is not normal.
 
 When one source fails, the others carry on. That tube keeps its last reading and its lamp lights.
 

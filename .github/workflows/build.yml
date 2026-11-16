@@ -1,6 +1,7 @@
 # Reads every source and publishes public/frame-0.json. If a reset is due, it also builds the next scale (frame-1.json, and so on).
 # Runs twice an hour, and whenever it is started by hand. GitHub starts timed jobs late and sometimes skips one
 # when it is busy, so the second try each hour keeps the frame from going more than an hour or so without a check.
+# A second timer, in second-timer.yml, starts this same job at different minutes in case this one's timer goes quiet.
 name: Build the frame
 on:
   workflow_dispatch:
@@ -11,12 +12,13 @@ on:
         default: false
   schedule:
     - cron: '17,47 * * * *'
+  workflow_call:
 permissions:
   contents: write
-concurrency: repo-writes
 jobs:
   run:
     runs-on: ubuntu-latest
+    concurrency: repo-writes
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5

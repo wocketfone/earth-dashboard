@@ -1,0 +1,14 @@
+# A second timer for the frame job. GitHub rations timed jobs and sometimes leaves one unstarted for hours.
+# Each timed job is rationed separately, so this one, set to different minutes, is a second chance for the same work.
+# It does nothing of its own: it runs "Build the frame" exactly as that job's own timer would.
+# Running the job more often is harmless. It only saves a new file when something has changed.
+name: Second timer
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '4,34 * * * *'
+permissions:
+  contents: write
+jobs:
+  frame:
+    uses: ./.github/workflows/build.yml
