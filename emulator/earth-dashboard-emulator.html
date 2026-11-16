@@ -484,7 +484,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
       if (r.file.ready) { const nx = await getFrame(addressFor(era + 1), fetcher, nowMs, waitMs); if (!nx.why && nx.file.era === era + 1) eras[era + 1] = nx; }
       $('scen').value = 'live'; $('scennote').textContent = 'Live readings, fetched from the address above.'; $('framebox').value = fmt(cur.file); $('framemsg').textContent = ''; $('resetmsg').textContent = '';
       const age = nowMs - Date.parse(r.file.made), when = `Frame ${r.file.seq}, made ${ago(age)}.`;
-      if (age > 26 * 3600000) return setFetch('old', 'Old', `${when} The file passed every check, but the fetcher refreshes it at least once a day, so the fetcher has stopped. The tubes show it anyway.`);
+      if (age > 26 * 3600000) return setFetch('old', 'Old', /\/public\/test\//.test(url) ? `${when} It passed every check. This is a bench test file with a fixed date, so Old is what to expect. The tubes show it.` : `${when} The file passed every check, but the fetcher refreshes it at least once a day, so the fetcher has stopped. The tubes show it anyway.`);
       if (relayed) $('scennote').textContent = 'Live readings, fetched through the copy of this emulator on the web.';
       return setFetch('good', 'Good', `${when} It passed every check. ` + (same ? 'Nothing has changed since the last fetch.' : 'The tubes walk quietly to any new reading.'));
     } finally { fetching = false; $('fetchnow').disabled = false; }
