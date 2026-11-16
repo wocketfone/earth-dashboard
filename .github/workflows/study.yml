@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
-concurrency: repo-writes
+concurrency: study
 jobs:
   run:
     runs-on: ubuntu-latest
