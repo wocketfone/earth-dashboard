@@ -28,7 +28,7 @@ A job on GitHub runs every hour. It reads each data source, works out the digits
 
 | Job | What it does | When |
 |---|---|---|
-| Build the frame | Reads the sources and publishes the file | Every hour, or by hand |
+| Build the frame | Reads the sources and publishes the file | Twice an hour, or by hand. GitHub sometimes skips a run; the next one catches up |
 | Work out the normals | Recalculates "normal" from 2001–2020 | By hand only |
 | Probe data sources | Tests each source and writes a report | By hand only |
 | Rehearse a reset | Pretends a reset is due and reports what would happen. Changes nothing the instrument reads | By hand only |
