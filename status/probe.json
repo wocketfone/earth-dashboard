@@ -1,25 +1,25 @@
 {
-  "ran": "2026-11-13T15:42:07.215Z",
+  "ran": "2026-11-16T14:51:52.866Z",
   "sources": [
     {
       "id": "litho-usgs",
       "tube": "LITHO",
       "role": "main",
-      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime=2026-10-14&minmagnitude=5&orderby=time-asc",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime=2026-10-17&minmagnitude=5&orderby=time-asc",
       "status": 200,
-      "bytes": 36008,
+      "bytes": 36582,
       "head": "time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type,horizontalError,depthError,magError,magNst,status,locationSource,magSource ",
-      "rows": 191,
-      "first": "2026-10-14",
-      "last": "2026-11-13",
-      "lastValue": 3981071705534.9854,
+      "rows": 194,
+      "first": "2026-10-17",
+      "last": "2026-11-16",
+      "lastValue": 1995262314968.8828,
       "ok": true,
-      "seconds": 0.7
+      "seconds": 0.4
     },
     {
       "id": "ocean-oisst",
       "tube": "OCEAN",
-      "role": "main",
+      "role": "extra",
       "url": "https://climatereanalyzer.org/clim/sst_daily/json/oisst2.1_world2_sst_day.json",
       "status": 200,
       "bytes": 104077,
@@ -29,7 +29,7 @@
       "last": "2024-09-21",
       "lastValue": 20.93,
       "ok": true,
-      "seconds": 0.3
+      "seconds": 0.4
     },
     {
       "id": "ocean-ncei",
@@ -44,69 +44,42 @@
       "last": "2026-10-15",
       "lastValue": 1.14,
       "ok": true,
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "id": "ocean-daily-ecmwf",
       "tube": "OCEAN",
-      "role": "candidate",
+      "role": "main",
       "url": "https://sites.ecmwf.int/data/climatepulse/data/series/era5_daily_series_sst_60S-60N_ocean.csv",
       "status": 200,
-      "bytes": 657843,
+      "bytes": 657954,
       "head": "# Description: This file contains daily mean sea surface temperature (SST) data from # ERA5 averaged over 60°S-60°N from 1979 to 2026 as well as daily temperat",
-      "rows": 17482,
+      "rows": 17485,
       "first": "1979-01-01",
-      "last": "2026-11-11",
-      "lastValue": 20.902,
+      "last": "2026-11-14",
+      "lastValue": 20.897,
       "ok": true,
       "seconds": 1
     },
     {
       "id": "atmos-daily-ecmwf",
       "tube": "ATMOS",
-      "role": "candidate",
+      "role": "main",
       "url": "https://sites.ecmwf.int/data/climatepulse/data/series/era5_daily_series_2t_global.csv",
       "status": 200,
-      "bytes": 1199150,
+      "bytes": 1199261,
       "head": "# Description: This file contains daily global mean near-surface (2m) air temperature # data from ERA5 from 1940 to 2026 as well as daily temperature anomalies",
-      "rows": 31727,
+      "rows": 31730,
       "first": "1940-01-01",
-      "last": "2026-11-11",
-      "lastValue": 14.529,
+      "last": "2026-11-14",
+      "lastValue": 14.499,
       "ok": true,
-      "seconds": 0.5
-    },
-    {
-      "id": "ocean-daily-cr",
-      "tube": "OCEAN",
-      "role": "candidate",
-      "url": "https://climatereanalyzer.org/clim/sst_daily/json_2clim/oisst2.1_world2_sst_day.json",
-      "status": 200,
-      "bytes": 126963,
-      "head": "[ {\"data_source\":\"NOAA OISST 2.1\",\"name\":\"1981\",\"data\":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null",
-      "rows": 16493,
-      "first": "1981-09-01",
-      "last": "2026-10-27",
-      "lastValue": 21.012,
-      "ok": true,
-      "seconds": 0.2
-    },
-    {
-      "id": "atmos-daily-cr",
-      "tube": "ATMOS",
-      "role": "candidate",
-      "url": "https://climatereanalyzer.org/clim/t2_daily/json_2clim/era5_world_t2_day.json",
-      "status": 200,
-      "bytes": 5931,
-      "head": "<!DOCTYPE HTML> <html lang=\"en\"> <head> <!-- Google tag (gtag.js) --> <script async src=\"https://www.googletagmanager.com/gtag/js?id=G-898GBP1TPH\"></script> ",
-      "ok": false,
-      "error": "Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
-      "seconds": 0.1
+      "seconds": 0.6
     },
     {
       "id": "atmos-gistemp",
       "tube": "ATMOS",
-      "role": "main",
+      "role": "backup",
       "url": "https://data.giss.nasa.gov/gistemp/tabledata_v4/GLB.Ts+dSST.csv",
       "status": 200,
       "bytes": 12887,
@@ -131,7 +104,7 @@
       "last": "2026-10-15",
       "lastValue": 1.43,
       "ok": true,
-      "seconds": 0.1
+      "seconds": 0.2
     },
     {
       "id": "cryo-north",
@@ -139,14 +112,14 @@
       "role": "main",
       "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/data/N_seaice_extent_daily_v4.0.csv",
       "status": 200,
-      "bytes": 1913835,
+      "bytes": 1914715,
       "head": "Year, Month, Day, Extent, Missing, Source Data YYYY, MM, DD, 10^6 sq km, 10^6 sq km, Source data product web sites: http://nsidc.org/data/nsidc-0081.",
-      "rows": 15899,
+      "rows": 15902,
       "first": "1978-10-26",
-      "last": "2026-11-12",
-      "lastValue": 8.852,
+      "last": "2026-11-15",
+      "lastValue": 8.999,
       "ok": true,
-      "seconds": 0.6
+      "seconds": 0.4
     },
     {
       "id": "cryo-south",
@@ -154,12 +127,12 @@
       "role": "main",
       "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/south/daily/data/S_seaice_extent_daily_v4.0.csv",
       "status": 200,
-      "bytes": 1838434,
+      "bytes": 1839099,
       "head": "Year, Month, Day, Extent, Missing, Source Data YYYY, MM, DD, 10^6 sq km, 10^6 sq km, Source data product web sites: http://nsidc.org/data/nsidc-0081.",
-      "rows": 15899,
+      "rows": 15902,
       "first": "1978-10-26",
-      "last": "2026-11-12",
-      "lastValue": 14.986,
+      "last": "2026-11-15",
+      "lastValue": 14.777,
       "ok": true,
       "seconds": 0.6
     },
@@ -169,14 +142,14 @@
       "role": "main",
       "url": "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_trend_gl.csv",
       "status": 200,
-      "bytes": 116657,
+      "bytes": 116744,
       "head": "# -------------------------------------------------------------------- # USE OF NOAA GML DATA # # These data are made freely available to the public and the sc",
-      "rows": 3969,
+      "rows": 3972,
       "first": "2016-01-01",
-      "last": "2026-11-12",
-      "lastValue": 428.28,
+      "last": "2026-11-15",
+      "lastValue": 428.3,
       "ok": true,
-      "seconds": 0.4
+      "seconds": 0.2
     },
     {
       "id": "chemo-monthly",
@@ -191,22 +164,37 @@
       "last": "2026-07-15",
       "lastValue": 427.55,
       "ok": true,
-      "seconds": 0.2
+      "seconds": 0.1
+    },
+    {
+      "id": "power-ember",
+      "tube": "ANTH + PALIN",
+      "role": "main",
+      "url": "https://files.ember-energy.org/public-downloads/generation/outputs/release_generation_monthly_global.csv",
+      "status": 200,
+      "bytes": 29103066,
+      "head": "Area,ISO 3 code,Date,Area type,Electricity source,Is aggregated source,Generation (TWh),Generation YoY change (TWh),Generation YoY change (%),Share of generatio",
+      "rows": 93,
+      "first": "2019-01-15",
+      "last": "2026-09-15",
+      "lastValue": 35.013,
+      "ok": true,
+      "seconds": 1.1
     },
     {
       "id": "anth-owid",
       "tube": "ANTH",
-      "role": "main",
+      "role": "backup",
       "url": "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv",
       "status": 200,
       "bytes": 9229369,
       "head": "country,year,iso_code,population,gdp,biofuel_cons_change_pct,biofuel_cons_change_twh,biofuel_cons_per_capita,biofuel_consumption,biofuel_elec_per_capita,biofuel",
-      "rows": 60,
-      "first": "1965-07-01",
-      "last": "2024-07-01",
-      "lastValue": 176737.094,
+      "rows": 26,
+      "first": "2000-07-01",
+      "last": "2025-07-01",
+      "lastValue": 31772.35,
       "ok": true,
-      "seconds": 0.8
+      "seconds": 0.9
     },
     {
       "id": "cyclo-nino34",
@@ -221,7 +209,7 @@
       "last": "2026-10-15",
       "lastValue": 3.25,
       "ok": true,
-      "seconds": 0.2
+      "seconds": 0.3
     },
     {
       "id": "cyclo-oni",
@@ -241,7 +229,7 @@
     {
       "id": "palin-owid",
       "tube": "PALIN",
-      "role": "main",
+      "role": "backup",
       "url": "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv",
       "status": 200,
       "bytes": 9229369,
@@ -266,7 +254,7 @@
       "last": "2026-10-31",
       "lastValue": 24,
       "ok": true,
-      "seconds": 1.3
+      "seconds": 30.1
     },
     {
       "id": "solar-eisn",
@@ -274,14 +262,14 @@
       "role": "extra",
       "url": "https://www.sidc.be/SILSO/DATA/EISN/EISN_current.csv",
       "status": 200,
-      "bytes": 598,
-      "head": "2026, 11, 01, 2026.834, 33, 5.2, 24, 30, 2026, 11, 02, 2026.837, 48, 7.8, 23, 27, 2026, 11, 03, 2026.840, 45, 7.7, 19, 21, 2026, 11, 04, 2026.842",
-      "rows": 13,
+      "bytes": 736,
+      "head": "2026, 11, 01, 2026.834, 33, 5.2, 25, 31, 2026, 11, 02, 2026.837, 48, 7.0, 23, 28, 2026, 11, 03, 2026.840, 45, 7.7, 19, 21, 2026, 11, 04, 2026.842",
+      "rows": 16,
       "first": "2026-11-01",
-      "last": "2026-11-13",
-      "lastValue": 139,
+      "last": "2026-11-16",
+      "lastValue": 101,
       "ok": true,
-      "seconds": 0.7
+      "seconds": 0.8
     }
   ]
 }
