@@ -5,7 +5,24 @@ const { get, SOURCES } = require('./sources.js');
 const byId = Object.fromEntries(SOURCES.map(s => [s.id, s]));
 const FIXTURES = process.env.EARTH_FIXTURES;
 
+// A few sources are large files that change rarely. Those are fetched at most once every `keepHours` and the parsed rows
+// are kept in data/cache between times. If a later fetch fails, the kept rows are used, however old: they are real
+// readings, and their own dates tell the frame job how stale they are.
+const cacheFile = id => path.join(root(), 'data', 'cache', id + '.json');
+const useCache = () => !FIXTURES || process.env.EARTH_CACHE === '1';
+function readCache(id) { try { const c = JSON.parse(fs.readFileSync(cacheFile(id), 'utf8')); return Array.isArray(c.rows) && c.rows.length && typeof c.fetched === 'string' ? c : null; } catch (e) { return null; } }
+
 async function load(id, url) {
+  const src = byId[id], keep = src.keepHours && !url && useCache();
+  const kept = keep ? readCache(id) : null;
+  if (kept && (clock() - Date.parse(kept.fetched)) / 3600000 < src.keepHours && clock() >= Date.parse(kept.fetched)) return kept.rows;
+  try {
+    const rows = await fetchRows(id, url);
+    if (keep) { fs.mkdirSync(path.dirname(cacheFile(id)), { recursive: true }); fs.writeFileSync(cacheFile(id), JSON.stringify({ fetched: new Date(clock()).toISOString(), rows }) + '\n'); }
+    return rows;
+  } catch (e) { if (kept) return kept.rows; throw e; }
+}
+async function fetchRows(id, url) {
   const src = byId[id];
   let text;
   if (FIXTURES) {
@@ -13,7 +30,7 @@ async function load(id, url) {
     if (!fs.existsSync(file)) throw new Error(`${id}: the server answered 404`);
     text = fs.readFileSync(file, 'utf8');
   } else {
-    const res = await get(url || src.url());
+    const res = await get(url || src.url(), src.keepHours ? 240000 : undefined);
     if (!res.ok) throw new Error(`${id}: the server answered ${res.status}`);
     text = res.text;
   }

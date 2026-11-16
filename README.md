@@ -12,7 +12,7 @@ If you've found this because the instrument has stopped updating, start with "Wh
 - **A dark tube means there's no reading.**
 - **A small lamp beside a tube** means its source reports more slowly than the button you pressed, or has gone quiet.
 
-The nine tubes, in order: LITHO (earthquakes), OCEAN (sea temperature), ATMOS (air temperature), CRYO (sea ice), CHEMO (carbon dioxide), CYCLO (the El Niño cycle), ANTH (world energy use), PALIN (renewable share of electricity), and SOLAR (sunspots). `docs/channel-names.md` explains the names.
+The nine tubes, in order: LITHO (earthquakes), OCEAN (sea temperature), ATMOS (air temperature), CRYO (sea ice), CHEMO (carbon dioxide), CYCLO (the El Niño cycle), ANTH (world electricity use), PALIN (renewable share of electricity), and SOLAR (sunspots). `docs/channel-names.md` explains the names.
 
 The four buttons pick the time window: today, 90 days, a year, and the baseline.
 

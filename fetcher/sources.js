@@ -109,7 +109,21 @@ function parseOwidColumn(text, column) {
   return sorted(all.filter(l => l.startsWith('World,')).map(l => l.split(','))
     .map(c => ({ date: iso(+c[iYear], 7, 1), value: num(c[iVal] === '' ? 'x' : c[iVal]) })));
 }
-const parseOwidEnergy = text => parseOwidColumn(text, 'primary_energy_consumption');            // TWh a year
+const parseOwidEnergy = text => parseOwidColumn(text, 'electricity_demand');                    // TWh a year
+// Ember's monthly electricity file. We want the World rows: demand, total generation, and renewable generation, month by month.
+// It is a long table, one line per place, month, and source. Fields can be quoted.
+function parseEmberWorld(text) {
+  const split = l => { const o = []; let cur = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === ',' && !q) { o.push(cur); cur = ''; } else cur += ch; } o.push(cur); return o; };
+  const all = text.split(/\r?\n/), head = split(all[0]).map(h => h.trim());
+  const A = head.indexOf('Area'), D = head.indexOf('Date'), S = head.indexOf('Electricity source'), G = head.indexOf('Generation (TWh)');
+  if (A < 0 || D < 0 || S < 0 || G < 0) throw new Error('The monthly electricity file has changed its columns.');
+  const WANT = { 'Demand': 'demand', 'Total generation': 'generation', 'Renewables': 'renewables' }, byMonth = {};
+  for (const l of all) { if (!l.startsWith('World,')) continue; const c = split(l), key = WANT[c[S]], v = num(c[G]), m = (c[D] || '').slice(0, 7);
+    if (key && v !== null && /^\d{4}-\d{2}$/.test(m)) (byMonth[m] = byMonth[m] || {})[key] = v; }
+  // a month counts only when all three figures are there and make sense
+  return sorted(Object.keys(byMonth).filter(m => { const r = byMonth[m]; return r.demand > 0 && r.generation > 0 && r.renewables >= 0 && r.renewables <= r.generation; })
+    .map(m => ({ date: m + '-15', ...byMonth[m], value: +(100 * byMonth[m].renewables / byMonth[m].generation).toFixed(3) })));
+}
 const parseOwidRenewShare = text => parseOwidColumn(text, 'renewables_share_elec');             // percent of electricity
 
 // NOAA Climate Prediction Center, monthly sea surface temperature indices.
@@ -156,13 +170,18 @@ const SOURCES = [
     url: () => 'https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_trend_gl.csv' },
   { id: 'chemo-monthly', tube: 'CHEMO', role: 'backup', parse: parseCo2Monthly,
     url: () => 'https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_gl.csv' },
-  { id: 'anth-owid', tube: 'ANTH', role: 'main', parse: parseOwidEnergy,
+  // World electricity, month by month, from Ember. One file feeds both ANTH (demand) and PALIN (renewable share).
+  // It is large and changes twice a month, so it is fetched once a day and kept in data/cache between times.
+  { id: 'power-ember', tube: 'ANTH + PALIN', role: 'main', parse: parseEmberWorld, keepHours: 20,
+    url: () => 'https://files.ember-energy.org/public-downloads/generation/outputs/release_generation_monthly_global.csv' },
+  // The yearly figures: the 2001-2020 normal comes from these, and they are the backup if the monthly file fails.
+  { id: 'anth-owid', tube: 'ANTH', role: 'backup', parse: parseOwidEnergy, keepHours: 20,
     url: () => 'https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv' },
   { id: 'cyclo-nino34', tube: 'CYCLO', role: 'main', parse: parseNino34,
     url: () => 'https://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices' },
   { id: 'cyclo-oni', tube: 'CYCLO', role: 'backup', parse: parseOni,
     url: () => 'https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt' },
-  { id: 'palin-owid', tube: 'PALIN', role: 'main', parse: parseOwidRenewShare,
+  { id: 'palin-owid', tube: 'PALIN', role: 'backup', parse: parseOwidRenewShare, keepHours: 20,
     url: () => 'https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv' },
   { id: 'solar-silso', tube: 'SOLAR', role: 'main', parse: parseSilsoDaily,
     url: () => 'https://www.sidc.be/SILSO/INFO/sndtotcsv.php' },
@@ -170,4 +189,4 @@ const SOURCES = [
     url: () => 'https://www.sidc.be/SILSO/DATA/EISN/EISN_current.csv' },
 ];
 
-module.exports = { get, SOURCES, parseCo2Daily, parseCo2Monthly, parseGistemp, parseSilsoDaily, parseNsidcDaily, parseOisstJson, parseNceiMonthly, parseUsgsCsv, parseOwidEnergy, parseOwidRenewShare, parseOwidColumn, parseNino34, parseOni, parseEisn };
+module.exports = { get, SOURCES, parseCo2Daily, parseCo2Monthly, parseGistemp, parseSilsoDaily, parseNsidcDaily, parseOisstJson, parseNceiMonthly, parseUsgsCsv, parseOwidEnergy, parseOwidRenewShare, parseOwidColumn, parseEmberWorld, parseNino34, parseOni, parseEisn };

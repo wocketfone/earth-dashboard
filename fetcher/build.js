@@ -69,6 +69,26 @@ const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { rec
     if (daily) return daily;
     throw new Error(`${dailyId} ${why}`);
   };
+  // ANTH and PALIN share one monthly file of world electricity. level: the figure for a stretch of months. change: how a
+  // stretch compares with the same months a year earlier. If the monthly file fails or has gone quiet, or the saved normal
+  // predates it, the yearly figure answers on all three buttons, as it used to.
+  const sum = (w, key) => w.reduce((a, r) => a + r[key], 0);
+  const power = async (n, yearlyId, level, change, note) => {
+    const yearly = async why => { const rows = await load(yearlyId), r = rows[rows.length - 1];
+      return { values: [r.value, r.value, r.value], latest: r.date, positions: [0, 0, 0].map(() => M.position(r.value, n)), cadence: 365, source: yearlyId, note: 'The latest yearly figure on every button' + (why ? `, because the monthly file ${why}.` : '.') }; };
+    // ANTH once measured all energy, not electricity. A normal saved back then must never be compared with an electricity figure.
+    if (yearlyId === 'anth-owid' && n.measures !== 'electricity') throw new Error('the saved normal is for a different quantity. Run the normals job.');
+    if (!n.monthly) return yearly('');
+    let why;
+    try {
+      const rows = await load('power-ember'), one = S.yearOnYear(rows, 1), three = S.yearOnYear(rows, 3), twelve = S.lastTwelve(rows), latest = rows[rows.length - 1].date;
+      if (!one || !three || !twelve) why = 'has months missing';
+      else if (ageDays(latest) > STALE_AFTER[30]) why = 'has published nothing new since ' + latest.slice(0, 7);
+      else { const recent = { transform: 'linear', normal: 0, step: n.recentStep }, values = [change(level(one.now), level(one.before)), change(level(three.now), level(three.before)), level(twelve)];
+        return { values, latest, positions: [M.position(values[0], recent), M.position(values[1], recent), M.position(values[2], n)], note: note + n.normal + '.' }; }
+    } catch (e) { why = 'failed: ' + e.message; }
+    return yearly(why);
+  };
   const readers = {
     OCEAN: async n => temperature(n, 'ocean-daily-ecmwf', 'ocean-ncei'),
     ATMOS: async n => temperature(n, 'atmos-daily-ecmwf', 'atmos-gistemp'),
@@ -80,8 +100,10 @@ const save = (f, text) => { fs.mkdirSync(path.dirname(path.join(ROOT, f)), { rec
       return three(rows, n);
     },
     CYCLO: async n => { let rows; try { rows = await load('cyclo-nino34'); } catch (e) { rows = await load('cyclo-oni'); } return three(rows, n); },
-    PALIN: async n => { const rows = await load('palin-owid'), r = rows[rows.length - 1]; return { values: [r.value, r.value, r.value], latest: r.date, positions: [0, 0, 0].map(() => M.position(r.value, n)) }; },
-    ANTH: async n => { const rows = await load('anth-owid'), r = rows[rows.length - 1]; return { values: [r.value, r.value, r.value], latest: r.date, positions: [0, 0, 0].map(() => M.position(r.value, n)) }; },
+    PALIN: async n => power(n, 'palin-owid', w => 100 * sum(w, 'renewables') / sum(w, 'generation'), (a, b) => a - b,
+      'Today and 90 days are the change in the share from the same months a year earlier, in percentage points. Year is the share over the last twelve months; normal is '),
+    ANTH: async n => power(n, 'anth-owid', w => sum(w, 'demand') * 12 / w.length, (a, b) => (a / b - 1) * 100,
+      'Today and 90 days are the change from the same months a year earlier, in percent. Year is the total over the last twelve months; normal is '),
     LITHO: async n => {
       const from = new Date(now - 400 * S.DAY).toISOString().slice(0, 10), ev = await load('litho-usgs', usgsUrl(from));
       const values = [24, 90 * 24, 365 * 24].map(h => S.energySince(ev, now, h));

@@ -20,7 +20,7 @@ const RULES = {
   CRYO:  { family: 'climbing', transform: 'linear', normal: 0,     step: 0.75, counts: true,  unit: 'standard deviations, Arctic and Antarctic averaged' },
   CHEMO: { family: 'climbing', transform: 'linear', normal: 390.6, step: 20,   counts: true,  unit: 'ppm of carbon dioxide' },
   CYCLO: { family: 'steady',   transform: 'linear', normal: 0,     step: 0.5,  wholeSteps: true, counts: false, unit: 'degrees C in the central Pacific; 0.5 is a weak El Nino, 2.0 a very strong one' },
-  ANTH:  { family: 'climbing', transform: 'linear', normal: null,  step: null, counts: true,  unit: 'exajoules of primary energy per year' },
+  ANTH:  { family: 'climbing', transform: 'linear', normal: null,  step: null, counts: true,  unit: 'TWh of electricity used worldwide per year' },
   PALIN: { family: 'climbing', transform: 'linear', normal: null,  step: null, counts: false, unit: 'percent of world electricity from renewables' },
   SOLAR: { family: 'steady',   transform: 'sqrt',   normal: 56.9,  step: 1.5,  counts: false, unit: 'sunspot number' },
 };
@@ -81,7 +81,7 @@ function resetDue(history, rules = RULES, days = 365, needed = 3, minReadings = 
 function memoryDigit(oldNormal, newRule) { return digit(position(oldNormal, newRule), null); }
 
 // How often each source reports, in days. A tube is "slow" on a button whose window is shorter than this.
-const CADENCE = { LITHO: 0, OCEAN: 30, ATMOS: 30, CRYO: 1, CHEMO: 1, CYCLO: 30, ANTH: 365, PALIN: 365, SOLAR: 1 };
+const CADENCE = { LITHO: 0, OCEAN: 1, ATMOS: 1, CRYO: 1, CHEMO: 1, CYCLO: 30, ANTH: 30, PALIN: 30, SOLAR: 1 };
 const WINDOWS = [1, 90, 365];                // buttons 1 to 3, in days
 
 // Builds one frame file. positions: three arrays (today, 90 days, year) of nine step-positions, null for no reading.

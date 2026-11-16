@@ -35,8 +35,8 @@ The first time a tube is read, there's no previous digit, so plain rounding appl
 | CRYO | Sea ice, Arctic and Antarctic averaged | Straight | Both poles at their usual extent for the date | 0.75 standard deviations | Yes |
 | CHEMO | Carbon dioxide | Straight | 390.6 ppm | 20 ppm | Yes |
 | CYCLO | El Niño and La Niña index (Niño 3.4) | Straight, whole steps | A neutral Pacific | 0.5 °C | No |
-| ANTH | World energy use per year | Straight | 140,822 TWh | 21,123 TWh (15%) | Yes |
-| PALIN | Renewable share of world electricity | Straight | 20.95% | 6 percentage points | No |
+| ANTH | World electricity use | Straight | Two questions; see below | 5,364 TWh on Year (25% of normal); 2% on Today and 90 days | Yes |
+| PALIN | Renewable share of world electricity | Straight | Two questions; see below | 6 points on Year; 1 point on Today and 90 days | No |
 | SOLAR | Sunspot number | Curved (square root) | 56.9 | 1.5 on the square-root scale | No |
 
 On the SOLAR curve, a spotless sun reads 1, an average sun reads 5, and about 200 spots reads 9. All nine digits can light.
@@ -53,6 +53,23 @@ Both tubes read a daily file from ECMWF, the European weather centre, which runs
 Because the planet is warming, an ordinary year sits a little above the average of the ten before it. So on Today and 90 days these two tubes will tend to rest around 6, not 5.
 
 CYCLO changes digit when the index crosses a whole step, not half of one. That lines its digits up with the official strengths: 5 is neutral, 6 is a weak El Niño (0.5 °C), 7 is moderate (1.0), 8 is strong (1.5), and 9 is very strong (2.0 or more). La Niña mirrors that on the left.
+
+## What do ANTH and PALIN compare against?
+
+Both read one file: Ember's monthly electricity figures for the whole world. It runs about seven weeks behind.
+
+- **Year** is the last twelve months, against the 2001–2020 normal. For ANTH that's the electricity the world used, against 21,457 TWh a year. For PALIN it's the renewable share, against 20.95%.
+- **Today** is the latest month against the same month a year earlier. **90 days** is the latest three months against the same three a year earlier. On these buttons 5 means no change from last year.
+- **ANTH moves a digit for every 2%.** Demand has grown about 3% a year lately, so it usually reads 6 or 7.
+- **PALIN moves a digit for every percentage point.** The share has been gaining about a point and a half a year, so it usually reads 6 or 7 too.
+
+Comparing with the same month a year earlier takes the seasons out. Demand peaks in summer and winter, and renewables peak in spring, so a month can only fairly be set against its own twin.
+
+The normals come from the yearly record at Our World in Data, which is built on the same Ember figures. That yearly record is also the backup: if the monthly file fails, has a month missing, or goes quiet for a hundred days, both tubes show the latest yearly figure on every button, with their lamps lit on Today and 90 days.
+
+The monthly file is large, so the job fetches it once a day and keeps a copy in `data/cache`. If Ember is down, the kept copy still answers.
+
+ANTH used to be the world's total energy use, which is only published once a year. It changed to electricity because that's where the growth is, including from data centres, and because it's published monthly.
 
 PALIN is the one tube where leaning right is good news. It doesn't count toward a reset for that reason. That's decided, not a placeholder. PALIN still gets a new normal when a reset happens.
 

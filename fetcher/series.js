@@ -41,6 +41,19 @@ function vsRecentAt(byDate, end, days, years = 10, pool = days === 1 ? 7 : 0) {
 }
 function vsRecentDays(rows, days, years = 10) { return rows.length ? vsRecentAt(new Map(rows.map(r => [r.date, r.value])), rows[rows.length - 1].date, days, years) : null; }
 
+// Monthly figures, compared with the same months a year earlier. rows: one per month, oldest first, dated YYYY-MM-..
+// Returns the last `k` months and the `k` months exactly a year before them, or null if any month in either stretch is missing.
+function yearOnYear(rows, k) {
+  const ym = r => +r.date.slice(0, 4) * 12 + +r.date.slice(5, 7), byMonth = new Map(rows.map(r => [ym(r), r]));
+  if (!rows.length) return null;
+  const end = ym(rows[rows.length - 1]), now = [], before = [];
+  for (let m = end - k + 1; m <= end; m++) { if (!byMonth.has(m) || !byMonth.has(m - 12)) return null; now.push(byMonth.get(m)); before.push(byMonth.get(m - 12)); }
+  return { now, before };
+}
+// The last twelve months, or null if any of them is missing.
+function lastTwelve(rows) { const y = yearOnYear(rows, 12); if (y) return y.now; if (rows.length < 12) return null;
+  const ym = r => +r.date.slice(0, 4) * 12 + +r.date.slice(5, 7), last = rows.slice(-12); return ym(last[11]) - ym(last[0]) === 11 ? last : null; }
+
 // Sea ice. For each calendar day, the usual extent and its spread over the chosen years (2001-2020 unless told otherwise), pooled over five days.
 function iceClimatology(rows, from = '2001-01-01', to = '2020-12-31') {
   const base = between(rows, from, to), byKey = {};
@@ -98,4 +111,4 @@ function parseHistory(text) {
   return [...byDate.keys()].sort().map(date => ({ date, digits: byDate.get(date) }));
 }
 
-module.exports = { vsRecentAt, vsRecentDays, tenYearsBefore, parseHistory,  DAY, toMs, mean, sd, windowMean, vsRecentYears, between, baseline, iceClimatology, iceZ, pairMean, dailySums, rollingSums, energySince };
+module.exports = { yearOnYear, lastTwelve, vsRecentAt, vsRecentDays, tenYearsBefore, parseHistory,  DAY, toMs, mean, sd, windowMean, vsRecentYears, between, baseline, iceClimatology, iceZ, pairMean, dailySums, rollingSums, energySince };

@@ -17,11 +17,12 @@ async function computeNormals({ era = 0, from = '2001-01-01', to = '2020-12-31',
   const first = era === 0, years = Math.round((S.toMs(to) - S.toMs(from)) / (365.25 * S.DAY));
   const out = { era, period: first ? '2001-2020' : `${from} to ${to}`, made: new Date(clock()).toISOString(), tubes: {} }, failed = [];
   const old = name => (prev.tubes[name] && !prev.tubes[name].error ? prev.tubes[name] : null);
-  const tube = async (name, fn) => {
+  // fits: says whether a saved entry from before measures the same thing. If it doesn't, it can't stand in after a failure.
+  const tube = async (name, fn, fits = () => true) => {
     try { out.tubes[name] = await fn(); log('OK  ', name, JSON.stringify(out.tubes[name]).slice(0, 150)); }
     catch (e) {
       log('FAIL', name, e.message); failed.push(name);
-      if (old(name)) out.tubes[name] = first ? old(name) : { ...old(name), carried: true };       // keep the last good normal
+      if (old(name) && fits(old(name))) out.tubes[name] = first ? old(name) : { ...old(name), carried: true };       // keep the last good normal
       else out.tubes[name] = { error: String(e.message) };
     }
   };
@@ -60,8 +61,11 @@ async function computeNormals({ era = 0, from = '2001-01-01', to = '2020-12-31',
     return { source: 'cryo-north + cryo-south', transform: 'linear', normal: 0, step: kept('CRYO', 'step', 0.75), cadence: 1, unit: 'standard deviations', clim }; });
   await tube('SOLAR', async () => { const b = need(span(await load('solar-silso')), 365.25, 'days');
     return { source: 'solar-silso + solar-eisn', transform: 'sqrt', normal: meanOf(b), step: kept('SOLAR', 'step', 1.5), cadence: 1, unit: 'sunspot number', days: b.length }; });
+  // ANTH is the world's electricity use. The normal comes from the yearly record. The readings come from a monthly file,
+  // with the yearly one as backup. On Today and 90 days it reads the change from the same months a year earlier, in percent.
   await tube('ANTH', async () => { const b = need(span(await load('anth-owid')), 1, 'years', first ? 1 : 0.6); const normal = Math.round(S.mean(b.map(r => r.value)));
-    return { source: 'anth-owid', transform: 'linear', normal, step: kept('ANTH', 'step', Math.round(normal * 0.15)), cadence: 365, unit: 'TWh a year', years: b.length }; });
+    return { source: 'power-ember', measures: 'electricity', monthly: true, transform: 'linear', normal, step: kept('ANTH', 'step', Math.round(normal * 0.25)), recentStep: kept('ANTH', 'recentStep', 2),
+      cadence: 30, unit: 'TWh a year', years: b.length, fallback: { source: 'anth-owid', cadence: 365 } }; }, o => o.measures === 'electricity');
   await tube('LITHO', async () => {
     let events = [];
     const y0 = +from.slice(0, 4), y1 = +to.slice(0, 4), after = iso(S.toMs(to) + S.DAY);
@@ -81,8 +85,10 @@ async function computeNormals({ era = 0, from = '2001-01-01', to = '2020-12-31',
     return { source: 'litho-usgs', transform: 'log10', windows, cadence: 0, unit: 'joules', earthquakes: events.length }; });
   // The Pacific cycle is published as a departure from its own normal, so 0 is neutral on every scale. Half a degree is the official step between strengths.
   out.tubes.CYCLO = { source: 'cyclo-nino34', transform: 'linear', normal: 0, step: 0.5, wholeSteps: true, cadence: 30, unit: 'degrees C' };
+  // PALIN is the renewable share of the world's electricity. Same arrangement as ANTH; its recent step is in percentage points.
   await tube('PALIN', async () => { const rows = await load('palin-owid'), b = need(span(rows), 1, 'years', first ? 1 : 0.6); const normal = +S.mean(b.map(r => r.value)).toFixed(2);
-    return { source: 'palin-owid', transform: 'linear', normal, step: kept('PALIN', 'step', PALIN_STEP), cadence: 365, unit: 'percent of electricity', years: b.length, latest: rows[rows.length - 1].value }; });
+    return { source: 'power-ember', monthly: true, transform: 'linear', normal, step: kept('PALIN', 'step', PALIN_STEP), recentStep: kept('PALIN', 'recentStep', 1),
+      cadence: 30, unit: 'percent of electricity', years: b.length, latest: rows[rows.length - 1].value, fallback: { source: 'palin-owid', cadence: 365 } }; });
   return { out, failed };
 }
 

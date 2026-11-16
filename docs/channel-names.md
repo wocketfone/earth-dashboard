@@ -17,7 +17,7 @@ The nine names make the instrument read like a piece of mid-century laboratory e
 | OCEAN | Greek *ōkeanos*, ocean | The oceans | Sea surface temperature |
 | CRYO | Greek *kryos*, frost | The ice | Arctic and Antarctic sea ice |
 | CHEMO | Combining form *chemo-*, chemical | Atmospheric chemistry | Carbon dioxide |
-| ANTH | Greek *anthrōpos*, human | Human energy use | World primary energy consumption |
+| ANTH | Greek *anthrōpos*, human | Human electricity use | World electricity demand |
 | PALIN | Greek *palin*, again or anew | Renewable energy | Renewable share of world electricity |
 
 ## What changed in version 1.1?
