@@ -1,19 +1,19 @@
 {
- "made": "2026-11-16T22:30:21.804Z",
+ "made": "2026-11-17T16:07:52.464Z",
  "era": 0,
  "tubes": {
   "LITHO": {
    "ok": true,
    "source": "litho-usgs",
    "unit": "joules",
-   "latest": "2026-11-16",
+   "latest": "2026-11-17",
    "values": [
-    519069060636726,
-    37755380780906670,
-    213115572417380220
+    515106849995018.2,
+    37759037245831830,
+    213111610206738560
    ],
    "positions": [
-    2.613,
+    2.605,
     -0.429,
     -0.855
    ],
@@ -23,17 +23,17 @@
    "ok": true,
    "source": "ocean-daily-ecmwf",
    "unit": "degrees C",
-   "latest": "2026-11-14",
+   "latest": "2026-11-15",
    "about": "Today and 90 days are degrees above the same days of the last ten years. Year is the level; normal is 20.426.",
    "values": [
-    0.4955533333333335,
-    0.43631222222222377,
-    20.87223561643837
+    0.49753333333333316,
+    0.4379199999999983,
+    20.87360547945207
    ],
    "positions": [
-    3.304,
-    2.909,
-    1.487
+    3.317,
+    2.919,
+    1.492
    ],
    "digits": "886"
   },
@@ -41,17 +41,17 @@
    "ok": true,
    "source": "atmos-daily-ecmwf",
    "unit": "degrees C",
-   "latest": "2026-11-14",
+   "latest": "2026-11-15",
    "about": "Today and 90 days are degrees above the same days of the last ten years. Year is the level; normal is 14.5.",
    "values": [
-    0.6564000000000014,
-    0.432395555555555,
-    15.031772602739728
+    0.6281266666666667,
+    0.4350577777777769,
+    15.033021917808224
    ],
    "positions": [
-    3.282,
-    2.162,
-    1.773
+    3.141,
+    2.175,
+    1.777
    ],
    "digits": "877"
   },
@@ -59,14 +59,14 @@
    "ok": true,
    "source": "cryo-north + cryo-south",
    "unit": "standard deviations",
-   "latest": "2026-11-15",
+   "latest": "2026-11-16",
    "values": [
-    -1.6977126666874236,
-    -1.8367998316733964,
-    -1.5128688571651967
+    -1.7178373944999898,
+    -1.8365124087276623,
+    -1.5127891242584253
    ],
    "positions": [
-    -2.264,
+    -2.29,
     -2.449,
     -2.017
    ],
@@ -76,21 +76,21 @@
    "ok": true,
    "source": "chemo-daily",
    "unit": "ppm",
-   "latest": "2026-11-15",
+   "latest": "2026-11-16",
    "values": [
     428.3,
-    428.01677777777786,
-    427.3460547945207
+    428.02400000000006,
+    427.35128767123274
    ],
    "positions": [
     1.883,
-    1.869,
+    1.87,
     1.836
    ],
    "digits": "777"
   },
   "CYCLO": {
-   "ok": true,
+   "ok": false,
    "source": "cyclo-nino34",
    "unit": "degrees C",
    "latest": "2026-10-15",
@@ -104,7 +104,8 @@
     5.24,
     1.433
    ],
-   "digits": "996"
+   "digits": "996",
+   "note": "Holding the last reading. fetch failed"
   },
   "ANTH": {
    "ok": true,
@@ -146,24 +147,24 @@
    "ok": true,
    "source": "solar-silso + solar-eisn",
    "unit": "sunspot number",
-   "latest": "2026-11-16",
+   "latest": "2026-11-17",
    "values": [
-    102,
-    63.144444444444446,
-    85.37260273972603
+    101,
+    63.477777777777774,
+    85.4904109589041
    ],
    "positions": [
-    1.702,
-    0.267,
-    1.129
+    1.669,
+    0.281,
+    1.133
    ],
    "digits": "756"
   }
  },
  "frame": {
   "v": 1,
-  "seq": 17,
-  "made": "2026-11-16T22:30:21.804Z",
+  "seq": 18,
+  "made": "2026-11-17T16:07:52.464Z",
   "poll": 3600,
   "era": 0,
   "ready": false,
@@ -176,8 +177,8 @@
   ],
   "slow": [
    "000001110",
-   "000000000",
-   "000000000",
+   "000001000",
+   "000001000",
    "000000000"
   ]
  }
