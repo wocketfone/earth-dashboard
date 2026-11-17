@@ -48,6 +48,8 @@ To run one by hand: open the **Actions** tab, pick the job, and press **Run work
 - `docs/firmware-brief.md`: what the instrument's own board has to do, on one page.
 - `public/test/`: made-up frames for bench testing a board. `index.json` in that folder lists them and says what each should do.
 - `docs/sequences/`: recordings of exactly what the tubes do in twelve situations, for checking firmware against.
+- `site/start/`: the start-here page for whoever inherits the instrument. It's a draft until the instrument is built.
+- `docs/card/`: the draft text and QR code for the etched card on the bottom of the box. Parked until the build.
 - `emulator/`: two web pages that imitate the tubes. The main one is live at https://wocketfone.github.io/earth-dashboard/ and has a button that fetches the real file and says whether the fetch was good. The single-tube one is at https://wocketfone.github.io/earth-dashboard/z550m.html.
 
 ## What happens at a reset?
