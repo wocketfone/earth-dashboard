@@ -1,5 +1,5 @@
 {
- "made": "2026-11-18T04:43:39.995Z",
+ "made": "2026-11-18T08:55:30.054Z",
  "era": 0,
  "tubes": {
   "LITHO": {
@@ -8,14 +8,14 @@
    "unit": "joules",
    "latest": "2026-11-18",
    "values": [
-    76831109866341.05,
-    37764883188834640,
-    213178493363803300
+    162726730640559.84,
+    37846788284978920,
+    213264388984577540
    ],
    "positions": [
-    0.661,
-    -0.429,
-    -0.854
+    1.428,
+    -0.426,
+    -0.853
    ],
    "digits": "654"
   },
@@ -113,14 +113,14 @@
    "latest": "2026-09-15",
    "about": "Today and 90 days are the change from the same months a year earlier, in percent. Year is the total over the last twelve months; normal is 21457.",
    "values": [
-    2.8909824785093408,
-    2.757589998588106,
-    31717.620000000006
+    3.0815664511106844,
+    2.899083903992139,
+    31819.601000000006
    ],
    "positions": [
-    1.445,
-    1.379,
-    1.913
+    1.541,
+    1.45,
+    1.932
    ],
    "digits": "667"
   },
@@ -131,19 +131,19 @@
    "latest": "2026-09-15",
    "about": "Today and 90 days are the change in the share from the same months a year earlier, in percentage points. Year is the share over the last twelve months; normal is 20.95.",
    "values": [
-    0.5183856113498564,
-    1.3636564164786265,
-    34.90718092971667
+    0.689892075369805,
+    1.5396457554475305,
+    35.21085635234709
    ],
    "positions": [
-    0.518,
-    1.364,
-    2.326
+    0.69,
+    1.54,
+    2.377
    ],
    "digits": "667"
   },
   "SOLAR": {
-   "ok": true,
+   "ok": false,
    "source": "solar-silso + solar-eisn",
    "unit": "sunspot number",
    "latest": "2026-11-17",
@@ -157,13 +157,14 @@
     0.282,
     1.134
    ],
-   "digits": "756"
+   "digits": "756",
+   "note": "Holding the last reading. fetch failed"
   }
  },
  "frame": {
   "v": 1,
-  "seq": 23,
-  "made": "2026-11-18T04:43:39.995Z",
+  "seq": 24,
+  "made": "2026-11-18T08:55:30.054Z",
   "poll": 3600,
   "era": 0,
   "ready": false,
@@ -175,9 +176,9 @@
    "555555555"
   ],
   "slow": [
-   "000001110",
-   "000000000",
-   "000000000",
+   "000001111",
+   "000000001",
+   "000000001",
    "000000000"
   ]
  }
