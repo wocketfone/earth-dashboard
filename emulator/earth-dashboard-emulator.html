@@ -191,7 +191,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
           </label>
         </div>
         <div class="row">
-          <label for="bounce" class="wide"><input type="checkbox" id="bounce"> Trying an idea: a tube pegged at 1 or 9 bounces to 0</label>
+          <label for="bounce" class="wide"><input type="checkbox" id="bounce"> Trying an idea: on Year, a climate or human tube pegged at 1 or 9 bounces to 0</label>
           <label for="bouncems">every
             <select id="bouncems"><option value="0.25" selected>quarter second</option><option value="0.5">half second</option></select>
           </label>
@@ -338,6 +338,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   const faults = new Set();
   function startLamp() { asleep = false; anim = null; lamp = { t0: t }; }
   let bounce = false, bounceS = 0.25;
+  const COUNTS = ['OCEAN', 'ATMOS', 'CRYO', 'CHEMO', 'ANTH'];   // the tubes that count toward a reset
   let eras = SCEN.first.eras, era = 0, cur = eras[0], lastQuiet = -Infinity;
   const frame = () => cur.frame, shown = [N, N, N, N, N, N, N, N, N];
   const put = (i, v) => { shown[i] = v; v === N ? driver.blank(i) : driver.show(i, v); };
@@ -365,11 +366,12 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
           if (s !== g) put(i, s === N || g === N ? g : s + Math.sign(g - s));
         }
       }
-      // An idea being tried: a tube resting on 1 or 9 bounces to 0 and back, so a pegged tube asks for attention.
-      // It is a plain change of digit every beat, the same as any other. The reading itself doesn't change.
-      const on0 = bounce && Math.floor(t / bounceS) % 2 === 1;
+      // An idea being tried: on the Year button, a pegged tube bounces to 0 and back, so it asks for attention.
+      // Only the five tubes that count toward a reset do it. A quiet sun, a strong El Niño, or a high renewable
+      // share isn't an alarm. It is a plain change of digit every beat. The reading itself doesn't change.
+      const on0 = bounce && mode === 2 && Math.floor(t / bounceS) % 2 === 1;
       for (let i = 0; i < 9; i++) {
-        const s = shown[i], want = on0 && s === target[i] && (s === 1 || s === 9) ? 0 : s;
+        const s = shown[i], want = on0 && COUNTS.includes(NAMES[i]) && s === target[i] && (s === 1 || s === 9) ? 0 : s;
         if (tubes[i].sel !== (want === N ? -1 : want)) want === N ? driver.blank(i) : driver.show(i, want);
       }
       return;
