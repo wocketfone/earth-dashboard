@@ -23,7 +23,7 @@ The nine names make the instrument read like a piece of mid-century laboratory e
 ## What changed in version 1.1?
 
 - **BIO became CYCLO.** No program-readable source exists for global plant growth. The Pacific cycle has one, and it's the liveliest honest signal on the panel.
-- **TECH became PALIN.** Data-centre electricity is only published in yearly reports that a person has to type in. The renewable share can be fetched, and it gives the panel one tube where leaning right is good news. PALIN is the root of palingenesis, which means regeneration.
+- **TECH became PALIN.** Data-centre electricity is only published in yearly reports that a person has to type in. The renewable share can be fetched, and it gives the panel one tube where a high digit is good news. PALIN is the root of palingenesis, which means regeneration.
 - **The tubes show one digit each**, not three.
 
 ## What changed in version 1.2?

@@ -1,12 +1,13 @@
 # Earth Dashboard: Mapping Rules
 
-Version 2, 16 November 2026. This is how a measurement becomes a digit on a tube. The code is in `fetcher/mapping.js`, with its tests beside it.
+Version 2.1, 20 November 2026. This is how a measurement becomes a digit on a tube. The code is in `fetcher/mapping.js`, with its tests beside it.
 
 ## What does a digit mean?
 
 - **5 is normal.** Normal is the 2001–2020 value for that tube, until a reset. Four tubes use a nearer normal on Today and 90 days; that's explained under their own headings.
 - **Each digit away from 5 is one step.** A step is a fixed amount, set per tube.
-- **Right of 5 means more of the thing measured. Left means less.** It never means better or worse. Warming tubes lean right; ice leans left.
+- **A higher digit means more of the thing measured. A lower digit means less.** It never means better or worse. Warming tubes read high; ice reads low.
+- **The tube reads like a dial.** The digits only read upright with 0 at the top, so 5 sits at the bottom and the glow travels clockwise. Normal is straight down. More climbs the left side toward 9; less climbs the right side toward 1. Until 20 November 2026 these notes had 5 at the top and "right means more"; a real tube showed that was upside down.
 - **1 and 9 mean "this far or further."**
 - **0 is never a reading.**
 - **A dash in the file means no reading at all.** The tube is dark.
@@ -71,7 +72,7 @@ The monthly file is large, so the job fetches it once a day and keeps a copy in 
 
 ANTH used to be the world's total energy use, which is only published once a year. It changed to electricity because that's where the growth is, including from data centres, and because it's published monthly.
 
-PALIN is the one tube where leaning right is good news. It doesn't count toward a reset for that reason. That's decided, not a placeholder. PALIN still gets a new normal when a reset happens.
+PALIN is the one tube where a high digit is good news. It doesn't count toward a reset for that reason. That's decided, not a placeholder. PALIN still gets a new normal when a reset happens.
 
 ## How are "set from the data" steps chosen?
 

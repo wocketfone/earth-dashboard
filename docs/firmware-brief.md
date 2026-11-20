@@ -75,6 +75,10 @@ Every press of buttons 1 to 4 runs the same sequence on all nine tubes together.
 
 Each scale's file keeps its own `seq`, so `frame-1.json` starts again at 1. Compare `seq` only within one scale. The board never sends anything to the server.
 
+## Which way up do the tubes go?
+
+With 0 at the top. The digits only read upright that way, so 5, which is normal, sits at the bottom. The glow travels clockwise as the digit rises. Nothing in the frame file changes; this is only about how each tube is turned in its socket.
+
 ## What can I test against?
 
 **Test files.** Made-up frames at fixed addresses, listed in `public/test/index.json`. Ten must be accepted and fifteen must be rejected. Each entry says what the tubes should show, or why the file is bad. They're served from:

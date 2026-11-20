@@ -19,7 +19,7 @@ The code leads to `https://wocketfone.github.io/earth-dashboard/start/`. That pa
 >
 > **UNPLUG BEFORE TOUCHING A TUBE. HIGH VOLTAGE.**
 >
-> **To read it:** the glow at the top means normal. Leaning right means more. Leaning left means less. A dark tube has no reading.
+> **To read it:** each tube reads like a dial. The glow at the bottom, on 5, means normal. Further round, toward 9, means more. Back toward 1 means less. A dark tube has no reading.
 >
 > **To test it:** hold any button for three seconds. Every tube counts 0 to 9.
 >
