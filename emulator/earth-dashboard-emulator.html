@@ -191,6 +191,12 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
           </label>
         </div>
         <div class="row">
+          <label for="bounce" class="wide"><input type="checkbox" id="bounce"> Trying an idea: a tube pegged at 1 or 9 bounces to 0</label>
+          <label for="bouncems">every
+            <select id="bouncems"><option value="0.25">quarter second</option><option value="0.5" selected>half second</option><option value="1">second</option><option value="2">two seconds</option></select>
+          </label>
+        </div>
+        <div class="row">
           <label for="fdigit">Pretend digit
             <select id="fdigit"></select></label>
           <label for="ftube">is dead on
@@ -331,6 +337,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   let mode = 0, anim = null, asleep = false, ripple = false, scen = 'first', phase = 'rest', lamp = null, sense = true;
   const faults = new Set();
   function startLamp() { asleep = false; anim = null; lamp = { t0: t }; }
+  let bounce = false, bounceS = 0.5;
   let eras = SCEN.first.eras, era = 0, cur = eras[0], lastQuiet = -Infinity;
   const frame = () => cur.frame, shown = [N, N, N, N, N, N, N, N, N];
   const put = (i, v) => { shown[i] = v; v === N ? driver.blank(i) : driver.show(i, v); };
@@ -357,6 +364,13 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
           const g = target[i], s = shown[i];
           if (s !== g) put(i, s === N || g === N ? g : s + Math.sign(g - s));
         }
+      }
+      // An idea being tried: a tube resting on 1 or 9 bounces to 0 and back, so a pegged tube asks for attention.
+      // It is a plain change of digit every beat, the same as any other. The reading itself doesn't change.
+      const on0 = bounce && Math.floor(t / bounceS) % 2 === 1;
+      for (let i = 0; i < 9; i++) {
+        const s = shown[i], want = on0 && s === target[i] && (s === 1 || s === 9) ? 0 : s;
+        if (tubes[i].sel !== (want === N ? -1 : want)) want === N ? driver.blank(i) : driver.show(i, want);
       }
       return;
     }
@@ -527,6 +541,8 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   $('sense').onchange = e => { sense = e.target.checked; faults.clear(); };
   $('ripple').onchange = e => ripple = e.target.checked;
   $('rawglow').onchange = e => raw = e.target.checked;
+  $('bounce').onchange = e => bounce = e.target.checked;
+  $('bouncems').onchange = e => bounceS = +e.target.value;
   $('pace').oninput = e => {
     pace = +e.target.value / 100; STEP = BASE.step * pace; WALK = BASE.walk * pace; SWEEP = 14 * STEP;
     $('pacev').textContent = Math.round(STEP * 1000) + ' ms a digit';
@@ -616,7 +632,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     pressReset, fetchLive, fetched: () => ({ ...fetched, live, blocked, era, seq: cur.file.seq, next: !!eras[era + 1], busy: fetching }),
     // Test hook: switch data set at once, with no walk.
     useScen(k) { scen = k; loadScen(); anim = null; lamp = null; for (let i = 0; i < 9; i++) put(i, cur.frame[mode][i]); },
-    state: () => ({ t, mode, phase, asleep, scen, STEP, WALK, era, ready: cur.file.ready, glow: cur.file.glow, halo: ctxs[0].canvas.style.filter,
+    state: () => ({ bounce, bounceS, t, mode, phase, asleep, scen, STEP, WALK, era, ready: cur.file.ready, glow: cur.file.glow, halo: ctxs[0].canvas.style.filter,
       sel: tubes.map(x => x.sel), cell: tubes.map(x => x.cell), raw, eye: tubes.map(x => Array.from(x.eye)), glowNow: tubes.map(x => Array.from(x.glow)),
       lit: tubes.map(x => { let m = -1, b = 0.08; x.glow.forEach((g, i) => { if (g > b) { b = g; m = i; } }); return m; }),
       lamps: lamps.map(l => l.classList.contains('on')), sensed: [...faults] }),
