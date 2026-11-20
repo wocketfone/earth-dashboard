@@ -1,5 +1,5 @@
 {
- "made": "2026-11-20T17:51:55.767Z",
+ "made": "2026-11-20T18:08:15.356Z",
  "era": 0,
  "tubes": {
   "LITHO": {
@@ -56,7 +56,7 @@
    "digits": "877"
   },
   "CRYO": {
-   "ok": true,
+   "ok": false,
    "source": "cryo-north + cryo-south",
    "unit": "standard deviations",
    "latest": "2026-11-19",
@@ -70,7 +70,8 @@
     -2.449,
     -2.017
    ],
-   "digits": "333"
+   "digits": "333",
+   "note": "Holding the last reading. fetch failed"
   },
   "CHEMO": {
    "ok": true,
@@ -162,8 +163,8 @@
  },
  "frame": {
   "v": 1,
-  "seq": 41,
-  "made": "2026-11-20T17:51:55.767Z",
+  "seq": 42,
+  "made": "2026-11-20T18:08:15.356Z",
   "poll": 3600,
   "era": 0,
   "ready": false,
@@ -175,9 +176,9 @@
    "555555555"
   ],
   "slow": [
-   "000001110",
-   "000000000",
-   "000000000",
+   "000101110",
+   "000100000",
+   "000100000",
    "000000000"
   ]
  }
