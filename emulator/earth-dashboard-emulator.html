@@ -193,7 +193,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
         <div class="row">
           <label for="bounce" class="wide"><input type="checkbox" id="bounce"> Trying an idea: a tube pegged at 1 or 9 bounces to 0</label>
           <label for="bouncems">every
-            <select id="bouncems"><option value="0.25">quarter second</option><option value="0.5" selected>half second</option><option value="1">second</option><option value="2">two seconds</option></select>
+            <select id="bouncems"><option value="0.25" selected>quarter second</option><option value="0.5">half second</option></select>
           </label>
         </div>
         <div class="row">
@@ -337,7 +337,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
   let mode = 0, anim = null, asleep = false, ripple = false, scen = 'first', phase = 'rest', lamp = null, sense = true;
   const faults = new Set();
   function startLamp() { asleep = false; anim = null; lamp = { t0: t }; }
-  let bounce = false, bounceS = 0.5;
+  let bounce = false, bounceS = 0.25;
   let eras = SCEN.first.eras, era = 0, cur = eras[0], lastQuiet = -Infinity;
   const frame = () => cur.frame, shown = [N, N, N, N, N, N, N, N, N];
   const put = (i, v) => { shown[i] = v; v === N ? driver.blank(i) : driver.show(i, v); };
