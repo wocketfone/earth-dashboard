@@ -58,7 +58,7 @@ for(let tube=0;tube<9;tube++)for(let dg=0;dg<10;dg++){if((tube*10+dg)%7&&!(tube=
  await p.selectOption('#fdigit','-1');await p.adv(.3);ok((await p.st()).sensed.length===0,'T10 cleared');await p.close()}
 {const p=await fresh();await p.uncheck('#sense');await p.selectOption('#fdigit','6');await p.press(0);await p.adv(9);const s=await p.st();ok(s.sensed.length===0,'T10b sensing off records nothing');ok(s.lit[0]===-1&&s.sel[0]===6,'T10b LITHO resting on dead 6 is dark');await p.close()}
 // T11 mount + electrical invariant
-{const p=await fresh();const a=await p.st();await p.selectOption('#mount','-90');await p.adv(.5);const c=await p.st();ok(eq(a.sel,c.sel),'T11 mount does not change readings');
+{const p=await fresh();const a=await p.st();await p.selectOption('#mount','90');await p.adv(.5);const c=await p.st();ok(eq(a.sel,c.sel),'T11 mount does not change readings');
  await p.press(1);let bad=0,direct=0,prev=(await p.st()).cell;const r=await p.evaluate(()=>{const e=window.__emu;let prev=e.state().cell,direct=0,multi=0;for(let i=0;i<40000;i++){e.advance(1e-4);const c=e.tubes.map(x=>x.cell);c.forEach((v,j)=>{if(v>=0&&prev[j]>=0&&v!==prev[j])direct++});e.tubes.forEach(x=>{let n=0;x.glow.forEach(g=>{});});prev=c}return {direct}});
  ok(r.direct===0,'T11 a glow never jumps digit without extinguishing first: '+r.direct);await p.close()}
 

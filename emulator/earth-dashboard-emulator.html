@@ -96,7 +96,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
 <div class="wrap">
   <header>
     <h1>Earth Dashboard Emulator</h1>
-    <p class="lede">Nine Z550M tubes and four buttons. Straight up is normal. A glow leaning right means more than normal; leaning left means less.</p>
+    <p class="lede">Nine Z550M tubes and four buttons. Each tube reads like a dial: 0 is at the top, and the glow travels clockwise. Straight down, on 5, is normal. Further round, up the left side, means more than normal; back up the right side means less.</p>
     <p class="lede also">Also: the <a href="https://wocketfone.github.io/earth-dashboard/z550m.html">single-tube emulator</a>, and the <a href="https://github.com/wocketfone/earth-dashboard">code, test files, and notes on GitHub</a>.</p>
   </header>
 
@@ -187,7 +187,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
         </div>
         <div class="row">
           <label for="mount">Tubes mounted with
-            <select id="mount"><option value="90">5 at the top</option><option value="-90">0 at the top</option></select>
+            <select id="mount"><option value="-90">0 at the top</option><option value="90">5 at the top</option></select>
           </label>
         </div>
         <div class="row">
@@ -531,7 +531,7 @@ td:first-child{font-family:var(--mono);font-size:13px;white-space:nowrap}
     pace = +e.target.value / 100; STEP = BASE.step * pace; WALK = BASE.walk * pace; SWEEP = 14 * STEP;
     $('pacev').textContent = Math.round(STEP * 1000) + ' ms a digit';
   };
-  let zeroDeg = 90;
+  let zeroDeg = -90;
   $('mount').onchange = e => zeroDeg = +e.target.value;
   $('fdigit').add(new Option('none', -1)); for (let i = 0; i < 10; i++) $('fdigit').add(new Option(i, i));
   NAMES.forEach((n, i) => $('ftube').add(new Option(n, i)));
