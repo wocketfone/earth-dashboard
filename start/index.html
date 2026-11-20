@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Earth Dashboard: start here</title>
+<meta name="description" content="What the Earth Dashboard is, how to read it, and how to keep it running.">
+<style>
+/* One plain page with nothing loaded from anywhere else, so it keeps working for as long as the address does. */
+:root{--bg:#f4f1ea;--fg:#1f1c17;--muted:#5d564b;--line:#cfc7b8;--panel:#fbf9f4;--accent:#9a3412;--warn:#7a1f12}
+@media (prefers-color-scheme:dark){:root{--bg:#171512;--fg:#ece7dc;--muted:#a59c8c;--line:#3a352d;--panel:#1f1c18;--accent:#f08a4b;--warn:#ffb4a1}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:18px/1.6 Georgia,"Times New Roman",serif;padding:32px 16px 64px}
+main{max-width:62ch;margin:0 auto}
+h1{font:600 30px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0 0 6px;letter-spacing:-.01em;text-wrap:balance}
+h2{font:600 20px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif;margin:44px 0 8px;padding-top:20px;border-top:1px solid var(--line)}
+p{margin:0 0 14px}
+.lede{color:var(--muted);font-size:19px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:8px}
+a{color:var(--accent)}
+code{font:15px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+.warn{border-left:4px solid var(--warn);background:var(--panel);padding:12px 16px;margin:0 0 14px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px}
+.warn strong{color:var(--warn)}
+.dial{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin:6px 0 14px;font:600 15px/1 system-ui,-apple-system,"Segoe UI",sans-serif;text-align:center}
+.dial span{padding:10px 0;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+.dial .mid{border-color:var(--accent);color:var(--accent)}
+.scale{display:flex;justify-content:space-between;font:14px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--muted);margin:-8px 0 14px}
+.table{overflow-x:auto;margin:0 0 14px}
+table{border-collapse:collapse;width:100%;font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:14px}
+.later{color:var(--muted);font-style:italic}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+@media print{body{background:#fff;color:#000;font-size:12pt;padding:0}a{color:#000}h2{break-after:avoid}}
+</style>
+</head>
+<body>
+<main>
+<h1>Earth Dashboard: start here</h1>
+<p class="lede">You've scanned the card on the bottom of the instrument, or someone has handed you this address. This page says what the instrument is and how to keep it running. You don't need to know anything about computers to read it.</p>
+
+<div class="warn"><strong>Unplug it before you touch a tube.</strong> The tubes run on high voltage. Pull the plug from the wall and wait a minute first.</div>
+
+<h2>What is it?</h2>
+<p>It's a wall instrument that shows how nine parts of the Earth compare with normal. Each of the nine glass tubes is one measurement: earthquakes, sea temperature, air temperature, sea ice, carbon dioxide, the Pacific's El Niño cycle, the world's electricity use, the share of that electricity from renewables, and sunspots.</p>
+<p>It was made by Atif, with the electronics by Aaron of Oscilloclock in Japan and the software written with Claude. The tubes are Philips Z550M, made in the early 1960s. Only a few thousand were ever made, so the spares that came with it matter.</p>
+
+<h2>How do I read it?</h2>
+<p>Don't read the number. Read where the glow sits on the tube's face, like the hand of a dial.</p>
+<div class="dial" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span class="mid">5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+<div class="scale"><span>less than normal</span><span>normal</span><span>more than normal</span></div>
+<ul>
+<li><strong>Each tube reads like a dial, and a glow at the bottom, on 5, means normal.</strong> Normal is the average for 2001 to 2020.</li>
+<li><strong>A glow further round the dial, toward 9, means more</strong> of the thing that tube measures. Back toward 1 means less. More isn't always bad: more renewable power is good news.</li>
+<li><strong>1 and 9 mean "this far or further."</strong></li>
+<li><strong>A dark tube means it has no reading.</strong></li>
+<li><strong>A small lamp beside a tube</strong> means its reading is older than the button you pressed, or its source has gone quiet.</li>
+</ul>
+<p>The four buttons choose the stretch of time: today, the last 90 days, the last year, and normal. Every press makes all nine tubes sweep up and settle, like the dials in a car when you start it. That's meant to happen.</p>
+
+<h2>How do I know it's working?</h2>
+<ul>
+<li><strong>Press any button.</strong> Every tube should count up from 0 to 9, fall back to 5, pause, and then walk to its reading.</li>
+<li><strong>Hold any button for three seconds.</strong> Every tube shows 0, then 1, up to 9, one second each. If a tube stays dark on one number, that digit has worn out. The tube still works for the other digits.</li>
+<li><strong>It goes dark by itself</strong> when nobody is in the room. That saves the tubes. Walk up to it, or press a button.</li>
+</ul>
+
+<h2>What's the covered button for?</h2>
+<p>One day the planet will have moved so far that several tubes sit stuck at 1 or 9. When that has lasted a whole year, a lamp lights beside the covered button.</p>
+<ul>
+<li><strong>If the lamp is lit, you can press the button.</strong> The instrument then measures against a newer normal, and a coloured light comes on at the base of each tube to show it has changed.</li>
+<li><strong>If the lamp isn't lit, the button does nothing.</strong></li>
+<li><strong>It can't be undone,</strong> and it doesn't need to be. Nothing is lost. The fourth button then shows where the old normal sits.</li>
+</ul>
+
+<h2>What if the readings stop changing?</h2>
+<p>The instrument gets its readings over WiFi from a small file on the internet. That file is rebuilt about twice an hour by a free service called GitHub. Try these in order.</p>
+<ol>
+<li><strong>Check the home WiFi.</strong> If the WiFi name or password has changed, the instrument has to be told. <span class="later">How to do that will be added here once the instrument is built.</span></li>
+<li><strong>Look at the file.</strong> Open <a href="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/frame-0.json">this address</a>. You'll see one line of text. Find <code>"made"</code>; the date after it should be within the last day or so. If it is, the internet side is fine and the fault is in the house.</li>
+<li><strong>If that date is old,</strong> the service has paused. This happens if nothing has changed for a long time. Someone who can sign in to the GitHub account needs to open the <a href="https://github.com/wocketfone/earth-dashboard/actions">Actions page</a> and switch on the two timers, "Build the frame" and "Second timer".</li>
+<li><strong>If one tube's lamp stays lit for weeks</strong> while the others are fine, the place that publishes that measurement has moved or closed. The tube keeps its last reading. Fixing it needs someone comfortable with code; point them at the <a href="https://github.com/wocketfone/earth-dashboard">project</a>, which explains itself.</li>
+</ol>
+<p>None of this harms the instrument. Whatever happens on the internet, the tubes hold their last readings and the buttons keep working.</p>
+
+<h2>How do I change a tube?</h2>
+<p class="later">The exact steps will be added here once the instrument is built. Until then: unplug it first, and don't force anything.</p>
+
+<h2>Who can sign in to GitHub?</h2>
+<p>The project lives in a GitHub account called <code>wocketfone</code>. This page doesn't hold the password, on purpose, because anyone can read this page.</p>
+<p>The family holds the sign-in details. If you're family and can't find them, ask whoever handled Atif's papers. Aaron at Oscilloclock can also make changes to the project.</p>
+
+<h2>Where is everything?</h2>
+<div class="table"><table>
+<tr><th>What</th><th>Where</th></tr>
+<tr><td>The project, with all its notes</td><td><a href="https://github.com/wocketfone/earth-dashboard">github.com/wocketfone/earth-dashboard</a></td></tr>
+<tr><td>A working picture of the instrument, on screen</td><td><a href="https://wocketfone.github.io/earth-dashboard/">wocketfone.github.io/earth-dashboard</a></td></tr>
+<tr><td>The file the instrument reads</td><td><a href="https://raw.githubusercontent.com/wocketfone/earth-dashboard/main/public/frame-0.json">frame-0.json</a></td></tr>
+<tr><td>The maker of the electronics</td><td><a href="https://oscilloclock.com/">oscilloclock.com</a></td></tr>
+</table></div>
+
+<footer>
+<p>This page is part of the project and is kept with it. If you're looking after the instrument now: thank you. It was built to be kept.</p>
+</footer>
+</main>
+</body>
+</html>
