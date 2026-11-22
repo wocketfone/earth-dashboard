@@ -1,5 +1,5 @@
 {
- "made": "2026-11-22T01:21:55.386Z",
+ "made": "2026-11-22T04:42:36.163Z",
  "era": 0,
  "tubes": {
   "LITHO": {
@@ -23,17 +23,17 @@
    "ok": true,
    "source": "ocean-daily-ecmwf",
    "unit": "degrees C",
-   "latest": "2026-11-19",
+   "latest": "2026-11-20",
    "about": "Today and 90 days are degrees above the same days of the last ten years. Year is the level; normal is 20.426.",
    "values": [
-    0.48537333333333166,
-    0.44424444444444333,
-    20.87926027397262
+    0.4785066666666644,
+    0.44539999999999935,
+    20.880602739726044
    ],
    "positions": [
-    3.236,
-    2.962,
-    1.511
+    3.19,
+    2.969,
+    1.515
    ],
    "digits": "886"
   },
@@ -41,19 +41,19 @@
    "ok": true,
    "source": "atmos-daily-ecmwf",
    "unit": "degrees C",
-   "latest": "2026-11-19",
+   "latest": "2026-11-20",
    "about": "Today and 90 days are degrees above the same days of the last ten years. Year is the level; normal is 14.5.",
    "values": [
-    0.710566666666665,
-    0.4434555555555537,
-    15.037495890410966
+    0.7733933333333294,
+    0.4467677777777723,
+    15.03851232876713
    ],
    "positions": [
-    3.553,
-    2.217,
-    1.792
+    3.867,
+    2.234,
+    1.795
    ],
-   "digits": "877"
+   "digits": "977"
   },
   "CRYO": {
    "ok": true,
@@ -162,14 +162,14 @@
  },
  "frame": {
   "v": 1,
-  "seq": 47,
-  "made": "2026-11-22T01:21:55.386Z",
+  "seq": 48,
+  "made": "2026-11-22T04:42:36.163Z",
   "poll": 3600,
   "era": 0,
   "ready": false,
   "glow": "",
   "d": [
-   "888379664",
+   "889379664",
    "587379665",
    "467376776",
    "555555555"
