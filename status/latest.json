@@ -1,5 +1,5 @@
 {
- "made": "2026-11-24T03:03:25.503Z",
+ "made": "2026-11-24T07:54:22.839Z",
  "era": 0,
  "tubes": {
   "LITHO": {
@@ -8,32 +8,32 @@
    "unit": "joules",
    "latest": "2026-11-24",
    "values": [
-    26782142457134.883,
+    16843597794923.143,
     39009399993624664,
     215405947672673950
    ],
    "positions": [
-    -0.416,
+    -0.89,
     -0.379,
     -0.834
    ],
-   "digits": "554"
+   "digits": "454"
   },
   "OCEAN": {
    "ok": true,
    "source": "ocean-daily-ecmwf",
    "unit": "degrees C",
-   "latest": "2026-11-21",
+   "latest": "2026-11-22",
    "about": "Today and 90 days are degrees above the same days of the last ten years. Year is the level; normal is 20.426.",
    "values": [
-    0.4715666666666678,
-    0.4464833333333331,
-    20.881953424657553
+    0.47548666666667216,
+    0.4475344444444467,
+    20.883328767123306
    ],
    "positions": [
-    3.144,
-    2.977,
-    1.52
+    3.17,
+    2.984,
+    1.524
    ],
    "digits": "886"
   },
@@ -41,17 +41,17 @@
    "ok": true,
    "source": "atmos-daily-ecmwf",
    "unit": "degrees C",
-   "latest": "2026-11-21",
+   "latest": "2026-11-22",
    "about": "Today and 90 days are degrees above the same days of the last ten years. Year is the level; normal is 14.5.",
    "values": [
-    0.8117066666666659,
-    0.4505011111111106,
-    15.039545205479454
+    0.870846666666667,
+    0.45469555555555097,
+    15.040701369863019
    ],
    "positions": [
-    4.059,
-    2.253,
-    1.798
+    4.354,
+    2.273,
+    1.802
    ],
    "digits": "977"
   },
@@ -162,14 +162,14 @@
  },
  "frame": {
   "v": 1,
-  "seq": 55,
-  "made": "2026-11-24T03:03:25.503Z",
+  "seq": 56,
+  "made": "2026-11-24T07:54:22.839Z",
   "poll": 3600,
   "era": 0,
   "ready": false,
   "glow": "",
   "d": [
-   "589379664",
+   "489379664",
    "587379665",
    "467376776",
    "555555555"
