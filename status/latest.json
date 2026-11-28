@@ -1,20 +1,20 @@
 {
- "made": "2026-11-27T19:43:43.042Z",
+ "made": "2026-11-28T08:37:10.214Z",
  "era": 0,
  "tubes": {
   "LITHO": {
    "ok": true,
    "source": "litho-usgs",
    "unit": "joules",
-   "latest": "2026-11-27",
+   "latest": "2026-11-28",
    "values": [
-    6808907561202.215,
-    39274826775997470,
-    215417169382414270
+    6799454636799.435,
+    39260380472470080,
+    215383245996025340
    ],
    "positions": [
-    -1.815,
-    -0.369,
+    -1.816,
+    -0.37,
     -0.834
    ],
    "digits": "354"
@@ -23,17 +23,17 @@
    "ok": true,
    "source": "ocean-daily-ecmwf",
    "unit": "degrees C",
-   "latest": "2026-11-25",
+   "latest": "2026-11-26",
    "about": "Today and 90 days are degrees above the same days of the last ten years. Year is the level; normal is 20.426.",
    "values": [
-    0.45099333333333647,
-    0.45006333333332904,
-    20.88709589041098
+    0.4632733333333334,
+    0.45102666666666735,
+    20.88831506849317
    ],
    "positions": [
+    3.088,
     3.007,
-    3,
-    1.537
+    1.541
    ],
    "digits": "886"
   },
@@ -41,17 +41,17 @@
    "ok": true,
    "source": "atmos-daily-ecmwf",
    "unit": "degrees C",
-   "latest": "2026-11-25",
+   "latest": "2026-11-26",
    "about": "Today and 90 days are degrees above the same days of the last ten years. Year is the level; normal is 14.5.",
    "values": [
-    0.794293333333334,
-    0.46260444444444815,
-    15.04427671232877
+    0.8203466666666674,
+    0.46535444444444884,
+    15.04570684931507
    ],
    "positions": [
-    3.971,
-    2.313,
-    1.814
+    4.102,
+    2.327,
+    1.819
    ],
    "digits": "977"
   },
@@ -146,30 +146,30 @@
    "ok": true,
    "source": "solar-silso + solar-eisn",
    "unit": "sunspot number",
-   "latest": "2026-11-27",
+   "latest": "2026-11-28",
    "values": [
-    26,
-    60.46666666666667,
-    84.8054794520548
+    46,
+    60.25555555555555,
+    84.71780821917808
    ],
    "positions": [
-    -1.631,
-    0.153,
-    1.109
+    -0.509,
+    0.144,
+    1.106
    ],
-   "digits": "356"
+   "digits": "456"
   }
  },
  "frame": {
   "v": 1,
-  "seq": 76,
-  "made": "2026-11-27T19:43:43.042Z",
+  "seq": 77,
+  "made": "2026-11-28T08:37:10.214Z",
   "poll": 3600,
   "era": 0,
   "ready": false,
   "glow": "",
   "d": [
-   "389379663",
+   "389379664",
    "587379665",
    "467376776",
    "555555555"
